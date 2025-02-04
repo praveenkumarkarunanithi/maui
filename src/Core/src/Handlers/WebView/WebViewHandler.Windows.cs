@@ -391,9 +391,39 @@ namespace Microsoft.Maui.Handlers
 				if (Handler is WebViewHandler handler)
 				{
 					if (args.IsSuccess)
+					{
 						handler.NavigationSucceeded(sender, args);
+					}
+					else if (args.WebErrorStatus == CoreWebView2WebErrorStatus.Unknown)
+					{
+						CheckContentLoadedAsync(sender, args, handler);
+					}
 					else
+					{
 						handler.NavigationFailed(sender, args);
+					}
+				}
+			}
+ 
+			private static async void CheckContentLoadedAsync(CoreWebView2 sender, CoreWebView2NavigationCompletedEventArgs args, WebViewHandler handler)
+			{
+				try
+				{
+					// Check if the webpage has finished loading (complete) or is usable but still loading resources (interactive)
+					var result = await sender.ExecuteScriptAsync("document.readyState");
+					if (result == "\"complete\"" || result == "\"interactive\"")
+					{
+						handler.NavigationSucceeded(sender, args);
+					}
+					else
+					{
+						handler.NavigationFailed(sender, args);
+					}
+				}
+				catch (Exception ex)
+				{
+					Debug.WriteLine(nameof(WebViewHandler), $"Error checking content load: {ex}");
+					handler.NavigationFailed(sender, args);
 				}
 			}
 
