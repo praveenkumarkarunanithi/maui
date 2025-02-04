@@ -422,7 +422,6 @@ namespace Microsoft.Maui.Handlers
 				}
 				catch (Exception ex)
 				{
-					Debug.WriteLine(nameof(WebViewHandler), $"Error checking content load: {ex}");
 					handler.NavigationFailed(sender, args);
 				}
 			}
