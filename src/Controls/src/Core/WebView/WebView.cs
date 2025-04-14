@@ -126,7 +126,6 @@ namespace Microsoft.Maui.Controls
 			if (DeviceInfo.Platform != DevicePlatform.Android)
 			{
 				script = EscapeJsString(script);
-				script = Regex.Replace(script, @"\r\n|\r|\n", " ");
 				
 				if (DeviceInfo.Platform != DevicePlatform.WinUI)
 				{
@@ -295,6 +294,8 @@ namespace Microsoft.Maui.Controls
 		{
 			if (js == null)
 				return null;
+
+			js = Regex.Replace(js, @"\r\n|\r|\n", " ");
 
 			if (js.IndexOf("'", StringComparison.Ordinal) == -1)
 				return js;
