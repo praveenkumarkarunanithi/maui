@@ -161,5 +161,23 @@ namespace Microsoft.Maui.Controls.Core.UnitTests
 
 			Assert.NotNull(defaultWebView.Cookies);
 		}
+
+		[Fact]
+		public void TestEscapeJsStringHandlesNewlines()
+		{
+			string scriptWithNewlines = "var x = 5;\r\n" +
+									"var y = 10;\r" +
+									"var z = x + y;\n";
+
+			var methodInfo = typeof(WebView).GetMethod("EscapeJsString",
+				System.Reflection.BindingFlags.NonPublic |
+				System.Reflection.BindingFlags.Static);
+
+			var result = methodInfo.Invoke(null, new object[] { scriptWithNewlines }) as string;
+
+			Assert.DoesNotContain("\r\n", result, StringComparison.Ordinal);
+			Assert.DoesNotContain("\r", result, StringComparison.Ordinal);
+			Assert.DoesNotContain("\n", result, StringComparison.Ordinal);
+		}
 	}
 }
