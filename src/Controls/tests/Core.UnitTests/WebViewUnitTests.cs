@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Threading.Tasks;
 using Microsoft.Maui.Controls.PlatformConfiguration;
 using Microsoft.Maui.Controls.PlatformConfiguration.AndroidSpecific;
 using Microsoft.Maui.Controls.PlatformConfiguration.WindowsSpecific;
@@ -163,21 +164,27 @@ namespace Microsoft.Maui.Controls.Core.UnitTests
 		}
 
 		[Fact]
-		public void TestEscapeJsStringHandlesNewlines()
+		public async Task TestEscapeJsStringHandlesNewlines()
 		{
 			string scriptWithNewlines = "var x = 5;\r\n" +
 									"var y = 10;\r" +
 									"var z = x + y;\n";
 
-			var methodInfo = typeof(WebView).GetMethod("EscapeJsString",
-				System.Reflection.BindingFlags.NonPublic |
-				System.Reflection.BindingFlags.Static);
-
-			var result = methodInfo.Invoke(null, new object[] { scriptWithNewlines }) as string;
-
-			Assert.DoesNotContain("\r\n", result, StringComparison.Ordinal);
-			Assert.DoesNotContain("\r", result, StringComparison.Ordinal);
-			Assert.DoesNotContain("\n", result, StringComparison.Ordinal);
+			var webView = new WebView();
+			string processedScript = null;
+			
+			((IWebViewController)webView).EvaluateJavaScriptRequested += (string script) => 
+			{
+				processedScript = script;
+				return Task.FromResult("DefaultResult");
+			};
+			
+			await webView.EvaluateJavaScriptAsync(scriptWithNewlines);
+			
+			Assert.NotNull(processedScript);
+			Assert.DoesNotContain("\r\n", processedScript, StringComparison.Ordinal);
+			Assert.DoesNotContain("\r", processedScript, StringComparison.Ordinal);
+			Assert.DoesNotContain("\n", processedScript, StringComparison.Ordinal);
 		}
 	}
 }
