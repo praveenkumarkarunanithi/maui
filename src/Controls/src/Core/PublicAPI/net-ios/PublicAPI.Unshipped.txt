@@ -147,6 +147,7 @@ Microsoft.Maui.Controls.ITextElement.TextTransform.set -> void
 ~override Microsoft.Maui.Controls.Handlers.Items2.CollectionViewHandler2.CreateController(Microsoft.Maui.Controls.ReorderableItemsView itemsView, UIKit.UICollectionViewLayout layout) -> Microsoft.Maui.Controls.Handlers.Items2.ItemsViewController2<Microsoft.Maui.Controls.ReorderableItemsView>
 ~override Microsoft.Maui.Controls.Handlers.Items2.CollectionViewHandler2.ScrollToRequested(object sender, Microsoft.Maui.Controls.ScrollToRequestEventArgs args) -> void
 ~override Microsoft.Maui.Controls.Handlers.Items2.CollectionViewHandler2.SelectLayout() -> UIKit.UICollectionViewLayout
+~override Microsoft.Maui.Controls.Handlers.Items2.CollectionViewHandler2.DisconnectHandler(UIKit.UIView platformView) -> void
 ~override Microsoft.Maui.Controls.Handlers.Items2.GroupableItemsViewController2<TItemsView>.CreateDelegator() -> UIKit.UICollectionViewDelegateFlowLayout
 ~override Microsoft.Maui.Controls.Handlers.Items2.GroupableItemsViewController2<TItemsView>.CreateItemsViewSource() -> Microsoft.Maui.Controls.Handlers.Items.IItemsViewSource
 ~override Microsoft.Maui.Controls.Handlers.Items2.GroupableItemsViewController2<TItemsView>.GetViewForSupplementaryElement(UIKit.UICollectionView collectionView, Foundation.NSString elementKind, Foundation.NSIndexPath indexPath) -> UIKit.UICollectionReusableView
