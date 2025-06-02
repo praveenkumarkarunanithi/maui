@@ -169,6 +169,7 @@ namespace Microsoft.Maui.Handlers
 
 						virtualView.FrameChanged(newRectangle);
 					}
+					// Only update frame when orientation actually changes, not for other display events.
 					else if (oldGeometry.InterfaceOrientation != newGeometry.InterfaceOrientation && _platformView is not null)
 					{
 						virtualView.FrameChanged(_platformView.Bounds.ToRectangle());
