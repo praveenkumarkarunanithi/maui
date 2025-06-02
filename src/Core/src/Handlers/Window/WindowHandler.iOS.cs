@@ -1,6 +1,5 @@
 ﻿using System;
 using Foundation;
-using Microsoft.Maui.Devices;
 using UIKit;
 
 namespace Microsoft.Maui.Handlers
@@ -8,35 +7,28 @@ namespace Microsoft.Maui.Handlers
 	public partial class WindowHandler : ElementHandler<IWindow, UIWindow>
 	{
 		readonly WindowProxy _proxy = new();
-		DisplayOrientation _previousOrientation;
 
 		protected override void ConnectHandler(UIWindow platformView)
 		{
 			base.ConnectHandler(platformView);
 
 			// For newer Mac Catalyst versions, we want to wait until we get effective window dimensions from the platform.
-			if (OperatingSystem.IsMacCatalystVersionAtLeast(16))
+			if (OperatingSystem.IsMacCatalystVersionAtLeast(16) || OperatingSystem.IsIOSVersionAtLeast(16))
 			{
 				_proxy.Connect(VirtualView, platformView);
 			}
 			else
 			{
 				UpdateVirtualViewFrame(platformView);
-				 _previousOrientation = VirtualView.GetOrientation();
-				DeviceDisplay.Current.MainDisplayInfoChanged += OnMainDisplayInfoChanged;
 			}
 		}
 
 		protected override void DisconnectHandler(UIWindow platformView)
 		{
-			if (OperatingSystem.IsMacCatalystVersionAtLeast(16))
+			if (OperatingSystem.IsMacCatalystVersionAtLeast(16) || OperatingSystem.IsIOSVersionAtLeast(16))
 			{
 				_proxy.Disconnect();
 			}
-			else
-            {
-                DeviceDisplay.Current.MainDisplayInfoChanged -= OnMainDisplayInfoChanged;
-            }
 			
 			base.DisconnectHandler(platformView);
 		}
@@ -132,15 +124,6 @@ namespace Microsoft.Maui.Handlers
 			}
 		}
 
-		 void OnMainDisplayInfoChanged(object? sender, DisplayInfoChangedEventArgs e)
-		{
-			if (_previousOrientation != e.DisplayInfo.Orientation)
-			{
-				_previousOrientation = e.DisplayInfo.Orientation;
-				UpdateVirtualViewFrame(PlatformView);
-			}
-		}
-
 		void UpdateVirtualViewFrame(UIWindow window)
 		{
 			VirtualView.FrameChanged(window.Bounds.ToRectangle());
@@ -149,6 +132,7 @@ namespace Microsoft.Maui.Handlers
 		class WindowProxy
 		{
 			WeakReference<IWindow>? _virtualView;
+			UIWindow? _platformView;
 
 			IWindow? VirtualView => _virtualView is not null && _virtualView.TryGetTarget(out var v) ? v : null;
 			IDisposable? _effectiveGeometryObserver;
@@ -156,6 +140,7 @@ namespace Microsoft.Maui.Handlers
 			public void Connect(IWindow virtualView, UIWindow platformView)
 			{
 				_virtualView = new(virtualView);
+				_platformView = platformView;
 
 				// https://developer.apple.com/documentation/uikit/uiwindowscene/effectivegeometry?language=objc#Discussion mentions:
 				// > This property is key-value observing (KVO) compliant. Observing effectiveGeometry is the recommended way
@@ -171,16 +156,23 @@ namespace Microsoft.Maui.Handlers
 
 			void HandleEffectiveGeometryObserved(NSObservedChange obj)
 			{
-				if (obj is not null && VirtualView is IWindow virtualView && obj.NewValue is UIWindowSceneGeometry newGeometry)
+				if (obj is not null && VirtualView is IWindow virtualView && obj.NewValue is UIWindowSceneGeometry newGeometry && obj.OldValue is UIWindowSceneGeometry oldGeometry)
 				{
-					var newRectangle = newGeometry.SystemFrame.ToRectangle();
-
-					if (double.IsNaN(newRectangle.X) || double.IsNaN(newRectangle.Y) || double.IsNaN(newRectangle.Width) || double.IsNaN(newRectangle.Height))
+					if (OperatingSystem.IsMacCatalyst())
 					{
-						return;
-					}
+						var newRectangle = newGeometry.SystemFrame.ToRectangle();
 
-					virtualView.FrameChanged(newRectangle);
+						if (double.IsNaN(newRectangle.X) || double.IsNaN(newRectangle.Y) || double.IsNaN(newRectangle.Width) || double.IsNaN(newRectangle.Height))
+						{
+							return;
+						}
+
+						virtualView.FrameChanged(newRectangle);
+					}
+					else if (oldGeometry.InterfaceOrientation != newGeometry.InterfaceOrientation && _platformView is not null)
+					{
+						virtualView.FrameChanged(_platformView.Bounds.ToRectangle());
+					}
 				}
 			}
 		}
