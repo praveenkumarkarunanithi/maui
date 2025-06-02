@@ -29,7 +29,7 @@ namespace Microsoft.Maui.Handlers
 			{
 				_proxy.Disconnect();
 			}
-			
+
 			base.DisconnectHandler(platformView);
 		}
 
