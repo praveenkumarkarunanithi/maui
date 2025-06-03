@@ -132,15 +132,16 @@ namespace Microsoft.Maui.Handlers
 		class WindowProxy
 		{
 			WeakReference<IWindow>? _virtualView;
-			UIWindow? _platformView;
+			WeakReference<UIWindow>? _platformView;
 
 			IWindow? VirtualView => _virtualView is not null && _virtualView.TryGetTarget(out var v) ? v : null;
+			UIWindow? PlatformView => _platformView is not null && _platformView.TryGetTarget(out var p) ? p : null;
 			IDisposable? _effectiveGeometryObserver;
 
 			public void Connect(IWindow virtualView, UIWindow platformView)
 			{
 				_virtualView = new(virtualView);
-				_platformView = platformView;
+				_platformView = new(platformView);
 
 				// https://developer.apple.com/documentation/uikit/uiwindowscene/effectivegeometry?language=objc#Discussion mentions:
 				// > This property is key-value observing (KVO) compliant. Observing effectiveGeometry is the recommended way
@@ -156,7 +157,7 @@ namespace Microsoft.Maui.Handlers
 
 			void HandleEffectiveGeometryObserved(NSObservedChange obj)
 			{
-				if (obj is not null && VirtualView is IWindow virtualView && obj.NewValue is UIWindowSceneGeometry newGeometry && obj.OldValue is UIWindowSceneGeometry oldGeometry)
+				if (obj is not null && VirtualView is IWindow virtualView && obj.NewValue is UIWindowSceneGeometry newGeometry)
 				{
 					if (OperatingSystem.IsMacCatalyst())
 					{
@@ -170,9 +171,9 @@ namespace Microsoft.Maui.Handlers
 						virtualView.FrameChanged(newRectangle);
 					}
 					// Only update frame when orientation actually changes, not for other display events.
-					else if (oldGeometry.InterfaceOrientation != newGeometry.InterfaceOrientation && _platformView is not null)
+					else if (obj.OldValue is UIWindowSceneGeometry oldGeometry && oldGeometry.InterfaceOrientation != newGeometry.InterfaceOrientation && PlatformView is UIWindow platformView)
 					{
-						virtualView.FrameChanged(_platformView.Bounds.ToRectangle());
+						virtualView.FrameChanged(platformView.Bounds.ToRectangle());
 					}
 				}
 			}
