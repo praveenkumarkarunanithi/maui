@@ -50,12 +50,7 @@ public class WebViewHelperTests
 				var example = 'It\\'s tricky!';
 			}
 			""";
-		const string expected = """
-			function test() {
-				console.log(\'Test "string" with a single quote\');
-				var example = \'It\\\\\'s tricky!\';
-			}
-			""";
+		const string expected = "function test() {\\n\tconsole.log(\\'Test \"string\" with a single quote\\');\\n\tvar example = \\'It\\\\\\\\\\'s tricky!\\';\\n}";
 		var result = WebViewHelper.EscapeJsString(input);
 		Assert.Equal(expected, result);
 	}
@@ -101,6 +96,50 @@ public class WebViewHelperTests
 	{
 		const string input = @"'Quote' and again \'Quote\'";
 		const string expected = @"\'Quote\' and again \\\'Quote\\\'";
+		var result = WebViewHelper.EscapeJsString(input);
+		Assert.Equal(expected, result);
+	}
+
+	[Fact]
+	public void EscapeJsString_SimpleJavaScriptWithNewlines()
+	{
+		const string input = "var x = 5;\r\n" +
+							"var y = 10;\r" +
+							"var z = x + y;\n";
+
+		const string expected = "var x = 5;\\nvar y = 10;\\nvar z = x + y;\\n";
+		var result = WebViewHelper.EscapeJsString(input);
+		Assert.Equal(expected, result);
+	}
+
+	[Fact]
+	public void EscapeJsString_TemplateLiterals()
+	{
+		const string input = @"let poll = `Is .NET MAUI cool?
+- Yes!
+- Yes!
+- Yes!
+Wow, so it is!
+`
+console.log(poll);";
+
+		const string expected = "let poll = \\`Is .NET MAUI cool?\\n- Yes!\\n- Yes!\\n- Yes!\\nWow, so it is!\\n\\`\\nconsole.log(poll);";  // Will be determined during testing
+		var result = WebViewHelper.EscapeJsString(input);
+		Assert.Equal(expected, result);
+	}
+
+	[Fact]
+	public void EscapeJsString_BackslashContinuations()
+	{
+		const string input = @"let poll = 'Is .NET MAUI cool? \n\
+- Yes! \n\
+- Yes! \n\
+- Yes! \n\
+Wow, so it is! \n\
+'
+console.log(poll);";
+
+		const string expected = "let poll = \\'Is .NET MAUI cool? \\\\n- Yes! \\\\n- Yes! \\\\n- Yes! \\\\nWow, so it is! \\\\n\\'\\nconsole.log(poll);";  // Will be determined during testing
 		var result = WebViewHelper.EscapeJsString(input);
 		Assert.Equal(expected, result);
 	}
