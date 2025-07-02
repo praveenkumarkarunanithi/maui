@@ -16,7 +16,7 @@ internal static partial class WebViewHelper
 		js = Regex.Replace(js, @"\r\n|\r", "\n");
 
 #if NET6_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
-        bool hasBacktick = js.Contains('`', StringComparison.Ordinal);
+		bool hasBacktick = js.Contains('`', StringComparison.Ordinal);
 #else
 		bool hasBacktick = js.IndexOf('`') != -1;
 #endif
@@ -28,7 +28,7 @@ internal static partial class WebViewHelper
 		if (hasBacktick)
 		{
 #if NET6_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
-            js = js.Replace("`", "\\`", StringComparison.Ordinal);
+			js = js.Replace("`", "\\`", StringComparison.Ordinal);
 #else
 			js = js.Replace("`", "\\`");
 #endif
@@ -39,20 +39,20 @@ internal static partial class WebViewHelper
 
 		// Replace literal newlines with \n
 #if NET6_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
-        js = js.Replace("\n", "\\n", StringComparison.Ordinal);
+		js = js.Replace("\n", "\\n", StringComparison.Ordinal);
 #else
 		js = js.Replace("\n", "\\n");
 #endif
 
 		// Restore original escape sequences
 #if NET6_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
-        js = js.Replace(NewlineMarker, "\\\\n", StringComparison.Ordinal);
+		js = js.Replace(NewlineMarker, "\\\\n", StringComparison.Ordinal);
 #else
 		js = js.Replace(NewlineMarker, "\\\\n");
 #endif
 
 #if NET6_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
-        if (!js.Contains('\'', StringComparison.Ordinal))
+		if (!js.Contains('\'', StringComparison.Ordinal))
 #else
 		if (js.IndexOf('\'') == -1)
 #endif
@@ -67,8 +67,8 @@ internal static partial class WebViewHelper
 	}
 
 #if NET6_0_OR_GREATER
-    [GeneratedRegex(@"(\\*)'")]
-    private static partial Regex EscapeJsStringRegex();
+	[GeneratedRegex(@"(\\*)'")]
+	private static partial Regex EscapeJsStringRegex();
 #else
 	static Regex? EscapeJsStringRegexCached;
 	private static Regex EscapeJsStringRegex() =>

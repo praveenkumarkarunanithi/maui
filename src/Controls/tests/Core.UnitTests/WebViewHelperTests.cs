@@ -123,7 +123,8 @@ Wow, so it is!
 `
 console.log(poll);";
 
-		const string expected = "let poll = \\`Is .NET MAUI cool?\\n- Yes!\\n- Yes!\\n- Yes!\\nWow, so it is!\\n\\`\\nconsole.log(poll);";  // Will be determined during testing
+		const string expected = "let poll = \\`Is .NET MAUI cool?\\n- Yes!\\n- Yes!\\n- Yes!\\n" +
+			"Wow, so it is!\\n\\`\\nconsole.log(poll);";
 		var result = WebViewHelper.EscapeJsString(input);
 		Assert.Equal(expected, result);
 	}
@@ -139,7 +140,8 @@ Wow, so it is! \n\
 '
 console.log(poll);";
 
-		const string expected = "let poll = \\'Is .NET MAUI cool? \\\\n- Yes! \\\\n- Yes! \\\\n- Yes! \\\\nWow, so it is! \\\\n\\'\\nconsole.log(poll);";  // Will be determined during testing
+		const string expected = "let poll = \\'Is .NET MAUI cool? \\\\n- Yes! \\\\n- Yes! \\\\n" +
+			"- Yes! \\\\nWow, so it is! \\\\n\\'\\nconsole.log(poll);";
 		var result = WebViewHelper.EscapeJsString(input);
 		Assert.Equal(expected, result);
 	}
