@@ -50,7 +50,6 @@ public class WebViewHelperTests
 				var example = 'It\\'s tricky!';
 			}
 			""";
-		
 		const string expected = """
 			function test() {
 				console.log(\'Test "string" with a single quote\');

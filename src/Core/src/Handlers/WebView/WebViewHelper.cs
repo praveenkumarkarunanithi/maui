@@ -58,11 +58,11 @@ internal static partial class WebViewHelper
 #endif
 			return js;
 
-		// Escape single quotes while preserving existing backslashes
 		return EscapeJsStringRegex().Replace(js, m =>
 		{
-			int slashes = m.Groups[1].Value.Length;
-			return new string('\\', (slashes * 2) + 1) + "'";
+			int count = m.Groups[1].Value.Length;
+			// Replace with doubled backslashes plus one extra backslash, then the quote.
+			return new string('\\', (count * 2) + 1) + "'";
 		});
 	}
 
