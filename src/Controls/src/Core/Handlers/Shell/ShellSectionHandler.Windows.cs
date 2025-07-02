@@ -139,6 +139,25 @@ namespace Microsoft.Maui.Controls.Handlers
 				}
 			}
 
+			if (pageStack.Count > 1)
+			{
+				var currentShell = VirtualView.FindParentOfType<Shell>();
+				if (currentShell?.Toolbar != null)
+				{
+					var navRootManager = MauiContext?.GetNavigationRootManager();
+					if (navRootManager != null && MauiContext != null)
+					{
+						var toolbar = currentShell.Toolbar.ToPlatform(MauiContext) as MauiToolbar;
+						if (toolbar != null)
+						{
+							toolbar.IsBackButtonVisible = Microsoft.UI.Xaml.Controls.NavigationViewBackButtonVisible.Visible;
+							toolbar.IsBackEnabled = true;
+							navRootManager.SetToolbar(toolbar);
+						}
+					}
+				}
+			}
+
 			// The point of this is to push the shell navigation over to using the INavigationStack
 			// work flow. Ideally we rewrite all the push/pop/etc.. parts inside ShellSection.cs
 			// to just use INavigationStack but that will be easier once all platforms are using
