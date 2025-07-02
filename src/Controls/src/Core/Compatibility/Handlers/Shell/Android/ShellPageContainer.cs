@@ -49,13 +49,35 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 
 		protected override void OnMeasure(int widthMeasureSpec, int heightMeasureSpec)
 		{
-			if (Child.PlatformView is AView aView)
+			if (Child?.PlatformView is AView aView)
 			{
-				aView.Measure(widthMeasureSpec, heightMeasureSpec);
+				if (aView is AndroidX.DrawerLayout.Widget.DrawerLayout)
+				{
+					// DrawerLayout requires EXACTLY mode, following ContainerView pattern
+					var width = widthMeasureSpec.GetSize();
+					var height = heightMeasureSpec.GetSize();
+
+					var exactWidthSpec = width > 0
+						? MeasureSpecMode.Exactly.MakeMeasureSpec(width)
+						: MeasureSpecMode.Unspecified.MakeMeasureSpec(0);
+
+					var exactHeightSpec = height > 0
+						? MeasureSpecMode.Exactly.MakeMeasureSpec(height)
+						: MeasureSpecMode.Unspecified.MakeMeasureSpec(0);
+
+					aView.Measure(exactWidthSpec, exactHeightSpec);
+				}
+				else
+				{
+					aView.Measure(widthMeasureSpec, heightMeasureSpec);
+				}
+
 				SetMeasuredDimension(aView.MeasuredWidth, aView.MeasuredHeight);
 			}
 			else
+			{
 				SetMeasuredDimension(0, 0);
+			}
 		}
 	}
 }
