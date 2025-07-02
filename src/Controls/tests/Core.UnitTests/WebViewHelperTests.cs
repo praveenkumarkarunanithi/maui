@@ -50,7 +50,13 @@ public class WebViewHelperTests
 				var example = 'It\\'s tricky!';
 			}
 			""";
-		const string expected = "function test() {\\n\tconsole.log(\\'Test \"string\" with a single quote\\');\\n\tvar example = \\'It\\\\\\\\\\'s tricky!\\';\\n}";
+		
+		const string expected = """
+			function test() {
+				console.log(\'Test "string" with a single quote\');
+				var example = \'It\\\\\'s tricky!\';
+			}
+			""";
 		var result = WebViewHelper.EscapeJsString(input);
 		Assert.Equal(expected, result);
 	}
