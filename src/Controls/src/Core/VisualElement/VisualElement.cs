@@ -1509,6 +1509,16 @@ namespace Microsoft.Maui.Controls
 			if (values == null)
 				return;
 
+			// Check if this is an app theme change and handle visual state updates
+			foreach (var value in values)
+			{
+				if (value.Key == AppThemeBinding.AppThemeResource)
+				{
+					ReapplyCurrentVisualState();
+					break;
+				}
+			}
+
 			if (!((IResourcesProvider)this).IsResourcesCreated || Resources.Count == 0)
 			{
 				base.OnParentResourcesChanged(values);
@@ -1595,6 +1605,28 @@ namespace Microsoft.Maui.Controls
 				// exits and the control still has focus.
 				VisualStateManager.GoToState(this,
 					IsFocused ? VisualStateManager.CommonStates.Focused : VisualStateManager.CommonStates.Unfocused);
+			}
+		}
+
+		/// <summary>
+		/// Re-applies the current visual state to ensure theme-dependent setters are updated.
+		/// </summary>
+		void ReapplyCurrentVisualState()
+		{
+			// Get the visual state groups for this element
+			var groups = (IList<VisualStateGroup>)GetValue(VisualStateManager.VisualStateGroupsProperty);
+			
+			if (groups == null || groups.Count == 0)
+				return;
+
+			// Find any active visual states and re-apply them
+			foreach (var group in groups)
+			{
+				if (group.CurrentState != null)
+				{
+					// Re-apply the current state to ensure theme-dependent bindings are refreshed
+					VisualStateManager.GoToState(this, group.CurrentState.Name);
+				}
 			}
 		}
 
