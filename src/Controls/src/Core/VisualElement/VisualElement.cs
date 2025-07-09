@@ -1613,6 +1613,10 @@ namespace Microsoft.Maui.Controls
 		/// </summary>
 		void ReapplyCurrentVisualState()
 		{
+			// Only proceed if we have visual state groups
+			if (!HasVisualStateGroups())
+				return;
+
 			// Get the visual state groups for this element
 			var groups = (IList<VisualStateGroup>)GetValue(VisualStateManager.VisualStateGroupsProperty);
 			
