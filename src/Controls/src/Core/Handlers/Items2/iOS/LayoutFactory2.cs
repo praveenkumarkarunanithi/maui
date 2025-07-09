@@ -216,10 +216,10 @@ internal static class LayoutFactory2
 			new LayoutSnapInfo { SnapType = linearItemsLayout.SnapPointsType, SnapAligment = linearItemsLayout.SnapPointsAlignment },
 			// Dynamic, estimated width
 			NSCollectionLayoutDimension.CreateEstimated(30f),
-			// Fill the height for horizontal
-			NSCollectionLayoutDimension.CreateFractionalHeight(1f),
+			// Estimated height to allow natural sizing
 			NSCollectionLayoutDimension.CreateEstimated(30f),
-			NSCollectionLayoutDimension.CreateFractionalHeight(1f),
+			NSCollectionLayoutDimension.CreateEstimated(30f),
+			NSCollectionLayoutDimension.CreateEstimated(30f),
 			linearItemsLayout.ItemSpacing,
 			null);
 
@@ -254,8 +254,8 @@ internal static class LayoutFactory2
 			NSCollectionLayoutDimension.CreateFractionalHeight(1f / gridItemsLayout.Span),
 			// Group width is dynamic for horizontal
 			NSCollectionLayoutDimension.CreateEstimated(30f),
-			// Group spans all rows, full height for horizontal
-			NSCollectionLayoutDimension.CreateFractionalHeight(1f),
+			// Group height should size to content for horizontal grids
+			NSCollectionLayoutDimension.CreateEstimated(30f),
 			gridItemsLayout.VerticalItemSpacing,
 			gridItemsLayout.HorizontalItemSpacing,
 			gridItemsLayout.Span);

@@ -423,7 +423,68 @@ namespace Microsoft.Maui.Controls.Handlers.Items2
 				return _emptyUIView.Frame.Size.ToSize();
 			}
 
-			return CollectionView.CollectionViewLayout.CollectionViewContentSize.ToSize();
+			var contentSize = CollectionView.CollectionViewLayout.CollectionViewContentSize;
+			
+			// For horizontal layouts, calculate the actual content height instead of using the full available height
+			if (ScrollDirection == UICollectionViewScrollDirection.Horizontal)
+			{
+				var actualHeight = CalculateHorizontalContentHeight();
+				if (actualHeight > 0)
+				{
+					return new Size(contentSize.Width, actualHeight);
+				}
+			}
+
+			return contentSize.ToSize();
+		}
+
+		nfloat CalculateHorizontalContentHeight()
+		{
+			if (CollectionView?.CollectionViewLayout is not UICollectionViewCompositionalLayout)
+				return 0;
+
+			var sectionCount = CollectionView.NumberOfSections();
+			if (sectionCount == 0)
+				return 0;
+
+			nfloat totalHeight = 0;
+
+			// Cache insets to avoid repeated property access
+			var flowLayout = ItemsViewLayout as UICollectionViewFlowLayout;
+			var sectionInsets = flowLayout?.SectionInset ?? UIEdgeInsets.Zero;
+
+			for (int section = 0; section < sectionCount; section++)
+			{
+				var itemCount = CollectionView.NumberOfItemsInSection(section);
+				if (itemCount == 0)
+					continue;
+
+				nfloat maxRowHeight = 0;
+
+				// Try layout attributes first - sample fewer items for performance
+				var samplesToCheck = Math.Min((int)itemCount, 2);
+				for (int item = 0; item < samplesToCheck; item++)
+				{
+					var indexPath = NSIndexPath.FromItemSection(item, section);
+					var attributes = CollectionView.CollectionViewLayout.LayoutAttributesForItem(indexPath);
+					if (attributes?.Frame.Height > maxRowHeight)
+						maxRowHeight = attributes.Frame.Height;
+				}
+
+				// Fallback to delegate if attributes unavailable
+				if (maxRowHeight <= 0 && Delegator is UICollectionViewDelegateFlowLayout flowDelegate)
+				{
+					var indexPath = NSIndexPath.FromItemSection(0, section);
+					var cellSize = flowDelegate.GetSizeForItem(CollectionView, ItemsViewLayout, indexPath);
+					maxRowHeight = cellSize.Height;
+				}
+
+				// Use the calculated height plus insets
+				if (maxRowHeight > 0)
+					totalHeight += maxRowHeight + sectionInsets.Top + sectionInsets.Bottom;
+			}
+
+			return totalHeight;
 		}
 
 		internal void UpdateView(object view, DataTemplate viewTemplate, ref UIView uiView, ref VisualElement formsElement)
