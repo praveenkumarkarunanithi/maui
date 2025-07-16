@@ -1617,19 +1617,38 @@ namespace Microsoft.Maui.Controls
 			if (!HasVisualStateGroups())
 				return;
 
-			// Get the visual state groups for this element
-			var groups = (IList<VisualStateGroup>)GetValue(VisualStateManager.VisualStateGroupsProperty);
-			
-			if (groups == null || groups.Count == 0)
+			// Get the visual state groups context
+			var context = this.GetContext(VisualStateManager.VisualStateGroupsProperty);
+			if (context is null)
 				return;
 
-			// Find any active visual states and re-apply them
+			var vsgSpecificityValue = context.Values.GetSpecificityAndValue();
+			var groups = (VisualStateGroupList)vsgSpecificityValue.Value;
+			if (groups?.IsDefault != false)
+				return;
+
+			var vsgSpecificity = vsgSpecificityValue.Key;
+			var specificity = vsgSpecificity.CopyStyle(1, 0, 0, 0);
+
+			// For each group with an active state, unapply and re-apply the setters
+			// to refresh theme-dependent bindings
 			foreach (var group in groups)
 			{
 				if (group.CurrentState != null)
 				{
-					// Re-apply the current state to ensure theme-dependent bindings are refreshed
-					VisualStateManager.GoToState(this, group.CurrentState.Name);
+					var currentState = group.CurrentState;
+
+					// Unapply current setters to clear old theme values
+					foreach (var setter in currentState.Setters)
+					{
+						setter.UnApply(this, specificity);
+					}
+
+					// Re-apply setters to get new theme values
+					foreach (var setter in currentState.Setters)
+					{
+						setter.Apply(this, specificity);
+					}
 				}
 			}
 		}
