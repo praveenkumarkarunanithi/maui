@@ -1512,6 +1512,13 @@ namespace Microsoft.Maui.Controls
 			if (!((IResourcesProvider)this).IsResourcesCreated || Resources.Count == 0)
 			{
 				base.OnParentResourcesChanged(values);
+				
+				// After base call, refresh visual state setters if this element has visual states
+				// This ensures DynamicResource setters pick up the updated resource values
+				if (this.HasVisualStateGroups())
+				{
+					VisualStateManager.RefreshCurrentStates(this);
+				}
 				return;
 			}
 
@@ -1531,7 +1538,16 @@ namespace Microsoft.Maui.Controls
 				}
 			}
 			if (changedResources.Count != 0)
+			{
 				OnResourcesChanged(changedResources);
+				
+				// After resource changes, refresh visual state setters if this element has visual states
+				// This ensures DynamicResource setters pick up the updated resource values
+				if (this.HasVisualStateGroups())
+				{
+					VisualStateManager.RefreshCurrentStates(this);
+				}
+			}
 		}
 
 		internal void UnmockBounds() => _mockX = _mockY = _mockWidth = _mockHeight = -1;

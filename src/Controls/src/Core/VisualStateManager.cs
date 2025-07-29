@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using Microsoft.Maui.Controls.Xaml;
+using Microsoft.Maui.Controls.Internals;
 
 namespace Microsoft.Maui.Controls
 {
@@ -64,6 +65,11 @@ namespace Microsoft.Maui.Controls
 		/// <include file="../../docs/Microsoft.Maui.Controls/VisualStateManager.xml" path="//Member[@MemberName='GoToState']/Docs/*" />
 		public static bool GoToState(VisualElement visualElement, string name)
 		{
+			return GoToState(visualElement, name, false);
+		}
+
+		internal static bool GoToState(VisualElement visualElement, string name, bool forceRefresh)
+		{
 			var context = visualElement.GetContext(VisualStateGroupsProperty);
 			if (context is null)
 			{
@@ -84,9 +90,9 @@ namespace Microsoft.Maui.Controls
 
 			foreach (VisualStateGroup group in groups)
 			{
-				if (group.CurrentState?.Name == name)
+				if (group.CurrentState?.Name == name && !forceRefresh)
 				{
-					// We're already in the target state; nothing else to do
+					// We're already in the target state and not forcing refresh; nothing else to do
 					return true;
 				}
 
@@ -97,7 +103,7 @@ namespace Microsoft.Maui.Controls
 					continue;
 				}
 
-				// If we've got a new state to transition to, unapply the setters from the current state
+				// If we've got a current state, unapply its setters (even if it's the same state when force refreshing)
 				if (group.CurrentState != null)
 				{
 					foreach (Setter setter in group.CurrentState.Setters)
@@ -143,6 +149,36 @@ namespace Microsoft.Maui.Controls
 				group.UpdateStateTriggers();
 			}
 		}
+
+		/// <summary>
+		/// Forces re-application of the current visual state setters for elements with visual states.
+		/// This is useful when DynamicResource values have changed and we need to refresh the current state.
+		/// </summary>
+		/// <param name="visualElement">The element to refresh visual states for</param>
+		internal static void RefreshCurrentStates(VisualElement visualElement)
+		{
+			if (visualElement == null)
+				return;
+
+			var context = visualElement.GetContext(VisualStateGroupsProperty);
+			if (context is null)
+				return;
+
+			var vsgSpecificityValue = context.Values.GetSpecificityAndValue();
+			var groups = (VisualStateGroupList)vsgSpecificityValue.Value;
+			if (groups?.IsDefault != false)
+				return;
+
+			foreach (VisualStateGroup group in groups)
+			{
+				if (group.CurrentState != null)
+				{
+					// Use the internal GoToState with forceRefresh=true to re-apply setters
+					GoToState(visualElement, group.CurrentState.Name, true);
+				}
+			}
+		}
+
 	}
 
 	/// <include file="../../docs/Microsoft.Maui.Controls/VisualStateGroupList.xml" path="Type[@FullName='Microsoft.Maui.Controls.VisualStateGroupList']/Docs/*" />
