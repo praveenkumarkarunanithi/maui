@@ -1,10 +1,11 @@
 namespace Maui.Controls.Sample.Issues;
-
 [Issue(IssueTracker.Github, 29428, "Shell flyout navigation fires NavigatedTo before Loaded event", PlatformAffected.iOS | PlatformAffected.Android)]
 public class Issue29428 : Shell
 {
     public Issue29428()
     {
+        System.Diagnostics.Debug.WriteLine($"[Sample Debug] Issue29428 Shell constructor started");
+        
         var mainPage = new ContentPage
         {
             Title = "Main Page",
@@ -23,7 +24,6 @@ public class Issue29428 : Shell
         };
 
         var secondPage = new EventOrderTestPage29428();
-
         Items.Add(new FlyoutItem
         {
             Title = "Main Page",
@@ -39,7 +39,6 @@ public class Issue29428 : Shell
         Items.Add(new FlyoutItem
         {
             Title = "Page 2",
-            AutomationId = "Page2FlyoutItem",
             Items =
             {
                 new ShellSection
@@ -48,6 +47,8 @@ public class Issue29428 : Shell
                 }
             }
         });
+        
+        System.Diagnostics.Debug.WriteLine($"[Sample Debug] Issue29428 Shell constructor completed");
     }
 
     public class EventOrderTestPage29428 : ContentPage
@@ -56,9 +57,10 @@ public class Issue29428 : Shell
 
         public EventOrderTestPage29428()
         {
-            Title = "Page 2";
+            System.Diagnostics.Debug.WriteLine($"[Sample Debug] EventOrderTestPage29428 constructor started");
+            
+            Title = "SecondPage";
             AutomationId = "SecondPage";
-
             _eventOrderLabel = new Label
             {
                 AutomationId = "EventOrderLabel",
@@ -84,20 +86,26 @@ public class Issue29428 : Shell
 
             Loaded += OnLoaded;
             NavigatedTo += OnNavigatedTo;
+            
+            System.Diagnostics.Debug.WriteLine($"[Sample Debug] EventOrderTestPage29428 constructor completed");
         }
 
         private void OnLoaded(object sender, EventArgs e)
         {
+            System.Diagnostics.Debug.WriteLine($"[Sample Debug] EventOrderTestPage29428.OnLoaded fired");
             _eventOrderLabel.Text = string.IsNullOrEmpty(_eventOrderLabel.Text)
                 ? "Loaded called first"
                 : $"{_eventOrderLabel.Text} then Loaded called";
+            System.Diagnostics.Debug.WriteLine($"[Sample Debug] EventOrderTestPage29428 label text: {_eventOrderLabel.Text}");
         }
 
         private void OnNavigatedTo(object sender, NavigatedToEventArgs e)
         {
+            System.Diagnostics.Debug.WriteLine($"[Sample Debug] EventOrderTestPage29428.OnNavigatedTo fired");
             _eventOrderLabel.Text = string.IsNullOrEmpty(_eventOrderLabel.Text)
                 ? "NavigatedTo called first"
                 : $"{_eventOrderLabel.Text} then NavigatedTo called";
+            System.Diagnostics.Debug.WriteLine($"[Sample Debug] EventOrderTestPage29428 label text: {_eventOrderLabel.Text}");
         }
 
         protected override void OnDisappearing()
