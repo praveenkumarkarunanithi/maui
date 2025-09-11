@@ -92,10 +92,7 @@ namespace Microsoft.Maui.Controls.Handlers.Items
 						return;
 					}
 					
-					foreach (var item in selectedItems)
-					{
-						_selectedSet.Add(item);
-					}
+					_selectedSet.UnionWith(selectedItems);
 					break;
 
 				default:
