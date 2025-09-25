@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentPage
+        xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+        x:Class="TestZone.Test.Views.ScrollTestView"    
+        xmlns:models="clr-namespace:TestZone.Test.Models"
+        xmlns:views="clr-namespace:TestZone.Test.Views"
+       x:Name="_TreeCarouselView"
+        NavigationPage.HasNavigationBar="False"
+    
+        BackgroundColor="Black"
+        >
+    <Grid RowDefinitions="1*,7*,1*"  HorizontalOptions="FillAndExpand"  VerticalOptions="FillAndExpand">
+        <CarouselView 
+            x:Name="_CarouselCompetencesView"
+            Grid.Row="1"            
+            HorizontalOptions="FillAndExpand"
+            VerticalOptions="FillAndExpand"
+             BackgroundColor="Black"
+            IsSwipeEnabled="False"
+            EmptyView = "No items to display."          
+            Loop="True"
+            ItemsUpdatingScrollMode="KeepLastItemInView"
+            ItemsSource="{Binding ContentViews, Source={x:Reference _TreeCarouselView}, Mode=TwoWay}"
+            >
+            <CarouselView.ItemTemplate>
+                <DataTemplate x:DataType="models:ScrollTestModel">
+                    <StackLayout HorizontalOptions="Fill">
+                        <Label Text="{Binding Name, Source={RelativeSource AncestorType={x:Type models:ScrollTestModel}}}" TextColor="White"/>
+                        <views:CustomView 
+                            HorizontalOptions="Fill"
+                            Name="{Binding Name,Mode=TwoWay, Source={RelativeSource AncestorType={x:Type models:ScrollTestModel}}}">
+                        </views:CustomView>
+                    </StackLayout>
+                </DataTemplate>
+            </CarouselView.ItemTemplate>
+        </CarouselView>
+        <views:CustomSelector
+            x:Name="_competenceSelector"
+            Carousel="{Binding ., Source={x:Reference _CarouselCompetencesView}}"
+            Grid.Row="2" BackgroundColor="Blue"
+            />
+        
+        
+    </Grid>
+
+</ContentPage>

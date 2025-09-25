@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<StackLayout xmlns="http://schemas.microsoft.com/dotnet/2021/maui" 
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="TestZone.Test.Views.CustomSelector"
+             x:Name="_CompetenceSelector">
+    <StackLayout.Resources>
+        <ControlTemplate x:Key="RadioButtonTemplate">
+            <HorizontalStackLayout  HeightRequest="20">
+                <VisualStateManager.VisualStateGroups>
+                    <VisualStateGroupList>
+                        <VisualStateGroup x:Name="CheckedStates">
+                            <VisualState x:Name="Checked">
+                                <VisualState.Setters>
+                                    <Setter TargetName="check" Property="Ellipse.Opacity" Value="1" />
+                                    <Setter TargetName="check" Property="Ellipse.Fill" Value="White" />
+                                </VisualState.Setters>
+                            </VisualState>
+                            <VisualState x:Name="Unchecked">
+                                <VisualState.Setters>
+                                    <Setter TargetName="radioButtonBorder" Property="Border.BackgroundColor" Value="Transparent" />
+                                    <Setter TargetName="check" Property="Ellipse.Opacity" Value="0" />
+                                    <Setter TargetName="check" Property="Ellipse.Fill" Value="Transparent" />
+                                </VisualState.Setters>
+                            </VisualState>
+                        </VisualStateGroup>
+                    </VisualStateGroupList>
+                </VisualStateManager.VisualStateGroups>
+
+                <Border
+                    x:Name="radioButtonBorder"
+            BackgroundColor="Transparent"
+            HeightRequest="20"
+            HorizontalOptions="Center"
+            Stroke="White"
+            StrokeShape="RoundRectangle 10"
+            StrokeThickness="2"
+            VerticalOptions="Center"
+            WidthRequest="20">
+                    <Grid WidthRequest="20">
+                    <Grid                    
+                    HeightRequest="18"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center"
+                    WidthRequest="18">
+                        <!-- ICI C'est transparent c'est pour ça que ca affiche le fond blanc-->
+                    <Ellipse
+                        Fill="Transparent"
+                        HeightRequest="15"
+                        HorizontalOptions="Center"
+                        Stroke="Transparent"
+                        VerticalOptions="Center"
+                        WidthRequest="15" />
+                    <Ellipse
+                        x:Name="check"
+                        Fill="white"
+                        HeightRequest="8"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center"
+                        WidthRequest="8" />
+                </Grid>
+            </Grid>
+          </Border>
+                <ContentPresenter/>
+            </HorizontalStackLayout>
+
+        </ControlTemplate>
+        <Style TargetType="RadioButton">
+            <Setter Property="ControlTemplate" Value="{StaticResource RadioButtonTemplate}" />
+        </Style>
+    </StackLayout.Resources>
+    <Grid ColumnDefinitions="5*,1*,4*,1*" HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
+<!--        <controls:CustomRadioButton Grid.Column="0" x:Name="_selectorAllCompetences"                             
+                             IsChecked="true" Content="Toutes"     
+                             HorizontalOptions="Center"            
+                               BackgroundColor="Transparent"
+                               BorderColor="White"
+                                    CheckedChanged="OnCheckBoxCheckedChanged" />-->
+        <RadioButton Grid.Column="0" x:Name="_selectorAllCompetences"                             
+                             IsChecked="true" Content="Toutes"     
+                             HorizontalOptions="Center"            
+                             BackgroundColor="Transparent"
+                             BorderColor="White"
+                             TextColor="White"
+                             CheckedChanged="OnCheckBoxCheckedChanged"/>
+        <Button Grid.Column="1" Text="&lt;" TextColor="White" FontSize="Large" BackgroundColor="Transparent" Clicked="PreviousItem" Padding="0"/>
+        <ContentView Grid.Column="2">
+            
+            <AbsoluteLayout>
+                <Border 
+                        AbsoluteLayout.LayoutBounds="0,0.5,130,30" AbsoluteLayout.LayoutFlags="YProportional"
+                        StrokeShape="RoundRectangle 20" BackgroundColor="White" Margin="0" Padding="0">
+                    <Label 
+                        TextColor="Black"
+                        Text="{Binding Carousel.CurrentItem.Name, Source={x:Reference _CompetenceSelector}}" 
+                        Padding="40,0,10,0" />
+                </Border>
+                <Border
+                        AbsoluteLayout.LayoutBounds="0,0.5,40,40" AbsoluteLayout.LayoutFlags="YProportional"
+                        Margin="0"
+                        BackgroundColor="Blue"
+                        Padding="5"
+                        StrokeShape="RoundRectangle 20">
+                    <Border WidthRequest="30" HeightRequest="30" StrokeShape="RoundRectangle 15" Padding="0" Margin="0" BackgroundColor="White" HorizontalOptions="Center" VerticalOptions="Center">
+                        <Button 
+                            Text="///"
+                            TextColor="Black"
+                            VerticalOptions="Center"  HorizontalOptions="Center"
+                            BackgroundColor="white"
+                            BorderColor="Blue"
+                            WidthRequest="14"
+                            HeightRequest="14"
+                            />
+
+                    </Border>
+                </Border>
+            </AbsoluteLayout>
+        </ContentView>
+        <Button Grid.Column="3" Text=">" TextColor="White" FontSize="Large" BackgroundColor="Transparent" Padding="0" Clicked="NextItem"/>
+    </Grid>
+</StackLayout>

@@ -1,4 +1,7 @@
-﻿namespace Maui.Controls.Sample;
+﻿using TestZone.Test.Models;
+using TestZone.Test.Views;
+
+namespace Maui.Controls.Sample;
 
 public partial class App : Application
 {
@@ -14,7 +17,7 @@ public partial class App : Application
 
 		if (!useShell)
 		{
-			return new Window(new NavigationPage(new MainPage()));
+			return new Window(new NavigationPage(new ScrollTestView()));
 		}
 		else
 		{

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui" 
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:custom="clr-namespace:TestZone.Test.Models"
+             xmlns:subviews="clr-namespace:TestZone.Test.Views"
+             x:Class="TestZone.Test.Views.TestPage"
+             x:Name="_TestPage">
+    <ContentPage.Content>
+        <StackLayout>
+            <CarouselView 
+                x:Name="_Carousel"
+                Grid.Row="2"            
+                HorizontalOptions="FillAndExpand"
+                VerticalOptions="FillAndExpand"
+                BackgroundColor="White"
+                IsSwipeEnabled="False"
+                EmptyView = "No items to display."          
+                Loop="True"
+                IsScrollAnimated="False"
+                ItemsUpdatingScrollMode="KeepLastItemInView"
+                ItemsSource="{Binding ContentViews, Source={x:Reference _TestPage}}"
+        >
+                <!-- VOIR DU COTE DE CONTENT VIEW -->
+                <CarouselView.ItemTemplate>
+                    <!--OK-->
+                    <DataTemplate x:DataType="custom:GraphicModel">
+<!--                        <ContentView Content="{Binding curveContent}"/>-->
+                        <subviews:MyCanvasView Titled="{Binding ., Mode=TwoWay}"/>
+                        <!-- C'EST CA QUI SOULE-->
+                    </DataTemplate>
+                </CarouselView.ItemTemplate>
+
+            </CarouselView>
+
+            <subviews:CustomSelector
+                x:Name="_competenceSelector"
+                Carousel="{Binding ., Source={x:Reference _Carousel}}"
+                Grid.Row="3" BackgroundColor="blue"/>
+        </StackLayout>
+    </ContentPage.Content>
+</ContentPage>

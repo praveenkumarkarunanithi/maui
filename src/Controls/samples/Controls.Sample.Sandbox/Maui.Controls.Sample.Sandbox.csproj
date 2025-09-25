@@ -9,6 +9,7 @@
     <IsPackable>false</IsPackable>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <!-- Disable multi-RID builds to workaround a parallel build issue -->
     <RuntimeIdentifier Condition="$(TargetFramework.Contains('-maccatalyst'))">maccatalyst-x64</RuntimeIdentifier>
     <RuntimeIdentifier Condition="$(TargetFramework.Contains('-maccatalyst')) and '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'arm64'">maccatalyst-arm64</RuntimeIdentifier>
@@ -36,10 +37,48 @@
     <ProjectReference Include="..\..\..\Controls\Foldable\src\Controls.Foldable.csproj" />
   </ItemGroup>
 
-  <ItemGroup Condition=" '$(UseMaui)' == 'true' ">
-    <PackageReference Include="Microsoft.Maui.Controls.Foldable" Version="$(MauiVersion)" />
-    <PackageReference Include="Microsoft.Maui.Controls.Maps" Version="$(MauiVersion)" />
+  <ItemGroup >
+  
+    <PackageReference Include="SkiaSharp" Version="2.88.7" />
+		<PackageReference Include="SkiaSharp.Views.Maui.Controls" Version="2.88.7" />
+		<PackageReference Include="SkiaSharp.Views.Maui.Core" Version="2.88.7" />
   </ItemGroup>
+
+  <ItemGroup>
+	  <Compile Update="Test\Views\CustomView.xaml.cs">
+	    <DependentUpon>CustomView.xaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="Test\Views\ScrollTestViewWithoutCarousel.xaml.cs">
+	    <DependentUpon>ScrollTestViewWithoutCarousel.xaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="Test\Views\ScrollTestView.xaml.cs">
+	    <DependentUpon>ScrollTestView.xaml</DependentUpon>
+	  </Compile>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <MauiXaml Update="Test\Views\ScrollRepere.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Test\Views\CustomView.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Test\Views\ScrollTestViewWithoutCarousel.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Test\Views\ScrollTestView.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Update="Test\Views\CustomSelector.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </None>
+	  <None Update="Test\Views\TestPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </None>
+	</ItemGroup>
 
   <ItemGroup>
     <MauiImage Include="Resources\Images\*" />
