@@ -12,6 +12,7 @@ namespace Microsoft.Maui.Handlers
 	public partial class EditorHandler : ViewHandler<IEditor, AppCompatEditText>
 	{
 		bool _set;
+		EditorTouchListener? _touchListener;
 
 		// TODO: NET8 issoto - Change the return type to MauiAppCompatEditText
 		protected override AppCompatEditText CreatePlatformView()
@@ -43,6 +44,9 @@ namespace Microsoft.Maui.Handlers
 		// TODO: NET8 issoto - Change the platformView type to MauiAppCompatEditText
 		protected override void ConnectHandler(AppCompatEditText platformView)
 		{
+			_touchListener ??= new EditorTouchListener();
+			platformView.SetOnTouchListener(_touchListener);
+			
 			platformView.TextChanged += OnTextChanged;
 			platformView.FocusChange += OnFocusChange;
 		}
@@ -50,6 +54,9 @@ namespace Microsoft.Maui.Handlers
 		// TODO: NET8 issoto - Change the platformView type to MauiAppCompatEditText
 		protected override void DisconnectHandler(AppCompatEditText platformView)
 		{
+			platformView.SetOnTouchListener(null);
+			_touchListener = null;
+			
 			platformView.TextChanged -= OnTextChanged;
 			platformView.FocusChange -= OnFocusChange;
 
@@ -155,6 +162,44 @@ namespace Microsoft.Maui.Handlers
 		{
 			this.PrepareForTextViewArrange(frame);
 			base.PlatformArrange(frame);
+		}
+	}
+
+	internal class EditorTouchListener : Java.Lang.Object, IOnTouchListener
+	{
+		public bool OnTouch(View? v, MotionEvent? e)
+		{
+			if (v is not AppCompatEditText editText || e == null)
+				return false;
+
+			// Check if EditText can scroll vertically (has content that exceeds its height)
+			// Only check this once to avoid repeated calls during Move events
+			var canScrollVertically = editText.CanScrollVertically(1) || editText.CanScrollVertically(-1);
+			
+			if (!canScrollVertically)
+				return false;
+
+			var parent = v.Parent;
+			if (parent == null)
+				return false;
+
+			switch (e.Action & MotionEventActions.Mask)
+			{
+				case MotionEventActions.Down:
+				case MotionEventActions.Move:
+					// Request parent to not intercept touch events so EditText can handle scrolling
+					parent.RequestDisallowInterceptTouchEvent(true);
+					break;
+
+				case MotionEventActions.Up:
+				case MotionEventActions.Cancel:
+					// Release the request when touch is complete
+					parent.RequestDisallowInterceptTouchEvent(false);
+					break;
+			}
+
+			// Return false to allow EditText to handle the touch event normally
+			return false;
 		}
 	}
 }
