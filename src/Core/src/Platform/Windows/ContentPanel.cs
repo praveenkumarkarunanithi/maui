@@ -11,6 +11,8 @@ using Microsoft.UI.Composition;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Hosting;
 using Microsoft.UI.Xaml.Shapes;
+using WSolidColorBrush = Microsoft.UI.Xaml.Media.SolidColorBrush;
+
 
 namespace Microsoft.Maui.Platform
 {
@@ -117,6 +119,10 @@ namespace Microsoft.Maui.Platform
 			}
 
 			_borderPath.UpdateBackground(background);
+			
+			Background = background is null
+				? new WSolidColorBrush(Microsoft.UI.Colors.Transparent)
+				: background.ToPlatform();
 		}
 
 		[Obsolete("Use Microsoft.Maui.Platform.UpdateBorderStroke instead")]

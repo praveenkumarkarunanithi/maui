@@ -249,14 +249,22 @@ namespace Microsoft.Maui.Platform
 
 		internal static void UpdatePlatformViewBackground(this FrameworkElement platformView, IView view)
 		{
-			(platformView as ContentPanel)?.UpdateBackground(null);
-
-			if (platformView is Control control)
+			if (platformView is ContentPanel contentPanel)
+			{
+				contentPanel.UpdateBackground(view.Background);
+			}
+			else if (platformView is Control control)
+			{
 				control.UpdateBackground(view.Background);
+			}
 			else if (platformView is Border border)
+			{
 				border.UpdateBackground(view.Background);
+			}
 			else if (platformView is Panel panel)
+			{
 				panel.UpdateBackground(view.Background);
+			}
 		}
 
 		public static async Task UpdateBackgroundImageSourceAsync(this FrameworkElement platformView, IImageSource? imageSource, IImageSourceServiceProvider? provider)
