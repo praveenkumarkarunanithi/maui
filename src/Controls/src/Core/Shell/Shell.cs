@@ -1619,20 +1619,22 @@ namespace Microsoft.Maui.Controls
 			}
 			else
 			{
-				void OnCurrentPageLoaded(object sender, EventArgs e)
-				{
-					if (sender is Page page)
-					{
-						page.Loaded -= OnCurrentPageLoaded;
-						page.SendNavigatedTo(new NavigatedToEventArgs(_previousPage));
-
-						// Restore flyout behavior observers after deferred NavigatedTo timing
-						// Android requires this call to maintain flyout functionality
-						CurrentContent?.EvaluateDisconnect();
-					}
-				}
-				
 				CurrentPage.Loaded += OnCurrentPageLoaded;
+			}
+		}
+
+		void OnCurrentPageLoaded(object sender, EventArgs e)
+		{
+			if (sender is Page page)
+			{
+				page.Loaded -= OnCurrentPageLoaded;
+				page.SendNavigatedTo(new NavigatedToEventArgs(_previousPage));
+
+#if ANDROID
+				// Restore flyout behavior observers after deferred NavigatedTo timing
+				// Android requires this call to maintain flyout functionality
+				CurrentContent?.EvaluateDisconnect();
+#endif
 			}
 		}
 
@@ -1654,6 +1656,13 @@ namespace Microsoft.Maui.Controls
 			if (!args.Cancelled)
 			{
 				_previousPage = CurrentPage;
+				
+				// Unsubscribe Loaded handler if navigating away before page loads to prevent memory leaks.
+				if (CurrentPage != null && !CurrentPage.IsLoaded)
+				{
+					CurrentPage.Loaded -= OnCurrentPageLoaded;
+				}
+				
 				CurrentPage?.SendNavigatingFrom(new NavigatingFromEventArgs());
 			}
 		}
