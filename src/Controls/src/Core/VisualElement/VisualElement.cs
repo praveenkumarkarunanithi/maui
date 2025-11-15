@@ -1602,6 +1602,16 @@ namespace Microsoft.Maui.Controls
 			if (values == null)
 				return;
 
+			// Check if this is an app theme change and handle visual state updates
+			foreach (var value in values)
+			{
+				if (value.Key == AppThemeBinding.AppThemeResource)
+				{
+					ReapplyCurrentVisualState();
+					break;
+				}
+			}
+
 			if (!((IResourcesProvider)this).IsResourcesCreated || Resources.Count == 0)
 			{
 				base.OnParentResourcesChanged(values);
@@ -1688,6 +1698,51 @@ namespace Microsoft.Maui.Controls
 				// exits and the control still has focus.
 				VisualStateManager.GoToState(this,
 					IsFocused ? VisualStateManager.CommonStates.Focused : VisualStateManager.CommonStates.Unfocused);
+			}
+		}
+
+		/// <summary>
+		/// Re-applies the current visual state to ensure theme-dependent setters are updated.
+		/// </summary>
+		void ReapplyCurrentVisualState()
+		{
+			// Only proceed if we have visual state groups
+			if (!HasVisualStateGroups())
+				return;
+
+			// Get the visual state groups context
+			var context = this.GetContext(VisualStateManager.VisualStateGroupsProperty);
+			if (context is null)
+				return;
+
+			var vsgSpecificityValue = context.Values.GetSpecificityAndValue();
+			var groups = (VisualStateGroupList)vsgSpecificityValue.Value;
+			if (groups?.IsDefault != false)
+				return;
+
+			var vsgSpecificity = vsgSpecificityValue.Key;
+			var specificity = vsgSpecificity.CopyStyle(1, 0, 0, 0);
+
+			// For each group with an active state, unapply and re-apply the setters
+			// to refresh theme-dependent bindings
+			foreach (var group in groups)
+			{
+				if (group.CurrentState != null)
+				{
+					var currentState = group.CurrentState;
+
+					// Unapply current setters to clear old theme values
+					foreach (var setter in currentState.Setters)
+					{
+						setter.UnApply(this, specificity);
+					}
+
+					// Re-apply setters to get new theme values
+					foreach (var setter in currentState.Setters)
+					{
+						setter.Apply(this, specificity);
+					}
+				}
 			}
 		}
 
