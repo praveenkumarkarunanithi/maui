@@ -15,6 +15,8 @@ namespace Microsoft.Maui.Platform
 	/// </summary>
 	public abstract class MauiView : UIView, ICrossPlatformLayoutBacking, IVisualTreeElementProvidable, IUIViewLifeCycleEvents, IPlatformMeasureInvalidationController
 	{
+		const double SafeAreaPaddingTolerance = 0.5;
+
 		/// <summary>
 		/// Flag indicating that parent views should be invalidated when this view is moved to a window.
 		/// This is used to trigger layout updates when the view hierarchy changes.
@@ -611,9 +613,24 @@ namespace Microsoft.Maui.Platform
 			var oldApplyingSafeAreaAdjustments = _appliesSafeAreaAdjustments;
 			_appliesSafeAreaAdjustments = RespondsToSafeArea() && !_safeArea.IsEmpty;
 
+			// Compare with tolerance to suppress floating-point jitter from animations while detecting real safe area changes
+			var safeAreaPaddingEquivalent = SafeAreaEquals(oldSafeArea, _safeArea);
 			// Return whether the way safe area interacts with our view has changed
 			return oldApplyingSafeAreaAdjustments == _appliesSafeAreaAdjustments &&
-				   (oldSafeArea == _safeArea || !_appliesSafeAreaAdjustments);
+				   (safeAreaPaddingEquivalent || !_appliesSafeAreaAdjustments);
+		}
+
+		static bool SafeAreaEquals(SafeAreaPadding a, SafeAreaPadding b)
+		{
+			if (a.Equals(b))
+			{
+				return true;
+			}
+
+			return Math.Abs(a.Left - b.Left) <= SafeAreaPaddingTolerance &&
+				Math.Abs(a.Right - b.Right) <= SafeAreaPaddingTolerance &&
+				Math.Abs(a.Top - b.Top) <= SafeAreaPaddingTolerance &&
+				Math.Abs(a.Bottom - b.Bottom) <= SafeAreaPaddingTolerance;
 		}
 
 		/// <summary>
