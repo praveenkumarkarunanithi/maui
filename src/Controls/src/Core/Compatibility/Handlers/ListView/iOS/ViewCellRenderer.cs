@@ -128,12 +128,27 @@ namespace Microsoft.Maui.Controls.Handlers.Compatibility
 
 				double width = size.Width;
 				var height = size.Height > 0 ? size.Height : double.PositiveInfinity;
-				var result = handler.MeasureVirtualView(new SizeF(width, height));
-				if (result == null)
-					return base.SizeThatFits(size);
+
+				// For compatibility with legacy layouts, use the old-style measurement with IncludeMargins
+				// This ensures that ViewCell measurement behavior matches Xamarin.Forms behavior
+				SizeRequest result;
+				if (handler.VirtualView is VisualElement visualElement)
+				{
+#pragma warning disable CS0618 // Type or member is obsolete
+					result = visualElement.Measure(width, height, MeasureFlags.IncludeMargins);
+#pragma warning restore CS0618 // Type or member is obsolete
+				}
+				else
+				{
+					// Fallback to new measurement method if not a VisualElement
+					var measureResult = handler.MeasureVirtualView(new SizeF(width, height));
+					if (measureResult == null)
+						return base.SizeThatFits(size);
+					result = new SizeRequest(new Size(measureResult.Value.Width, measureResult.Value.Height));
+				}
 
 				// make sure to add in the separator if needed
-				var finalheight = (float)result.Value.Height + (SupressSeparator ? 0f : 1f) / UIScreen.MainScreen.Scale;
+				var finalheight = (float)result.Request.Height + (SupressSeparator ? 0f : 1f) / UIScreen.MainScreen.Scale;
 
 				return new SizeF(size.Width, finalheight);
 			}
