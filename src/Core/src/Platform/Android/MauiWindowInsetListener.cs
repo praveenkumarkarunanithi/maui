@@ -8,6 +8,7 @@ using AndroidX.Core.View;
 using AndroidX.Core.Widget;
 using AndroidX.RecyclerView.Widget;
 using Google.Android.Material.AppBar;
+using Google.Android.Material.BottomNavigation;
 using AView = Android.Views.View;
 
 namespace Microsoft.Maui.Platform
@@ -264,16 +265,25 @@ namespace Microsoft.Maui.Platform
 				}
 			}
 
-			// Handle bottom navigation
-			var hasBottomNav = v.FindViewById(Resource.Id.navigationlayout_bottomtabs)?.MeasuredHeight > 0;
-			if (hasBottomNav)
+			// Handle bottom navigation - find the actual BottomNavigationView inside the container
+			var bottomTabsContainer = v.FindViewById(Resource.Id.navigationlayout_bottomtabs);
+			BottomNavigationView? bottomNavigationView = null;
+			if (bottomTabsContainer is ViewGroup container)
+			{
+				for (int i = 0; i < container.ChildCount; i++)
+				{
+					if (container.GetChildAt(i) is BottomNavigationView bnv)
+					{
+						bottomNavigationView = bnv;
+						break;
+					}
+				}
+			}
+			var hasBottomNav = bottomNavigationView?.MeasuredHeight > 0;
+			if (hasBottomNav && bottomNavigationView is not null)
 			{
 				var bottomInset = Math.Max(systemBars?.Bottom ?? 0, displayCutout?.Bottom ?? 0);
-				v.SetPadding(0, 0, 0, bottomInset);
-			}
-			else
-			{
-				v.SetPadding(0, 0, 0, 0);
+				bottomNavigationView.SetPadding(bottomNavigationView.PaddingLeft, bottomNavigationView.PaddingTop, bottomNavigationView.PaddingRight, bottomInset);
 			}
 
 			// Create new insets with consumed values
@@ -281,14 +291,14 @@ namespace Microsoft.Maui.Platform
 				systemBars?.Left ?? 0,
 				appBarHasContent ? 0 : systemBars?.Top ?? 0,
 				systemBars?.Right ?? 0,
-				hasBottomNav ? 0 : systemBars?.Bottom ?? 0
+				systemBars?.Bottom ?? 0
 			) ?? Insets.None;
 
 			var newDisplayCutout = Insets.Of(
 				displayCutout?.Left ?? 0,
 				appBarHasContent ? 0 : displayCutout?.Top ?? 0,
 				displayCutout?.Right ?? 0,
-				hasBottomNav ? 0 : displayCutout?.Bottom ?? 0
+				displayCutout?.Bottom ?? 0
 			) ?? Insets.None;
 
 			return new WindowInsetsCompat.Builder(insets)
