@@ -307,8 +307,22 @@ namespace Microsoft.Maui.Controls.Handlers.Compatibility
 						return;
 					}
 
-					var size = _viewHandler.MeasureVirtualView(widthMeasureSpec, heightMeasureSpec);
-					height = (int)size.Height;
+					// For compatibility with legacy layouts, use the old-style measurement with IncludeMargins
+					// This ensures that ViewCell measurement behavior matches Xamarin.Forms behavior
+					SizeRequest measureResult;
+					if (_viewHandler.VirtualView is VisualElement visualElement)
+					{
+#pragma warning disable CS0618 // Type or member is obsolete
+						measureResult = visualElement.Measure(Context.FromPixels(width), double.PositiveInfinity, MeasureFlags.IncludeMargins);
+#pragma warning restore CS0618 // Type or member is obsolete
+						height = (int)Context.ToPixels(_viewCell.Height > 0 ? _viewCell.Height : measureResult.Request.Height);
+					}
+					else
+					{
+						// Fallback to new measurement method if not a VisualElement
+						var size = _viewHandler.MeasureVirtualView(widthMeasureSpec, heightMeasureSpec);
+						height = (int)size.Height;
+					}
 				}
 				else
 				{
