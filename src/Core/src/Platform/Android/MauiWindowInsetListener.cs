@@ -286,26 +286,8 @@ namespace Microsoft.Maui.Platform
 				contentView?.SetPadding(0, 0, 0, 0);
 			}
 
-			// Create new insets with consumed values
-			// Pass insets through to child views - SafeAreaExtensions overlap logic determines actual padding needed
-			var newSystemBars = Insets.Of(
-				systemBars?.Left ?? 0,
-				systemBars?.Top ?? 0,
-				systemBars?.Right ?? 0,
-				systemBars?.Bottom ?? 0
-			) ?? Insets.None;
-
-			var newDisplayCutout = Insets.Of(
-				displayCutout?.Left ?? 0,
-				displayCutout?.Top ?? 0,
-				displayCutout?.Right ?? 0,
-				displayCutout?.Bottom ?? 0
-			) ?? Insets.None;
-
-			return new WindowInsetsCompat.Builder(insets)
-				?.SetInsets(WindowInsetsCompat.Type.SystemBars(), newSystemBars)
-				?.SetInsets(WindowInsetsCompat.Type.DisplayCutout(), newDisplayCutout)
-				?.Build() ?? insets;
+			// Return original insets unchanged so child views can apply their own safe area padding
+			return insets;
 		}
 
 		public void TrackView(AView view)
