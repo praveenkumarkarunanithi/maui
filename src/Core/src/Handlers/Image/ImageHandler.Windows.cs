@@ -10,6 +10,9 @@ namespace Microsoft.Maui.Handlers
 {
 	public partial class ImageHandler : ViewHandler<IImage, WImage>
 	{
+		// Cache image dimensions for consistent layout behavior
+		private Graphics.Size _cachedImageSize = Graphics.Size.Zero;
+
 		/// <inheritdoc/>
 		protected override WImage CreatePlatformView() => new WImage();
 
@@ -68,7 +71,8 @@ namespace Microsoft.Maui.Handlers
 			// unconstrained here and rely on layout constraints.
 			if (VirtualView.Aspect == Aspect.AspectFit)
 			{
-				var imageSize = GetImageSize();
+				// Use cached size to avoid timing-dependent behavior from BitmapSource properties
+				var imageSize = _cachedImageSize;
 				double w = possibleSize.Width;
 				double h = possibleSize.Height;
 
@@ -174,6 +178,8 @@ namespace Microsoft.Maui.Handlers
 			{
 				ih.PlatformView.MaxWidth = double.PositiveInfinity;
 				ih.PlatformView.MaxHeight = double.PositiveInfinity;
+				// Clear cached size when source changes
+				ih._cachedImageSize = Graphics.Size.Zero;
 			}
 
 			return handler.SourceLoader.UpdateImageSourceAsync();
@@ -185,6 +191,8 @@ namespace Microsoft.Maui.Handlers
 			// handler hasn't been disconnected
 			if (this.IsConnected())
 			{
+				// Cache size when image loads for consistent layout
+				_cachedImageSize = GetImageSize();
 				UpdateValue(nameof(IImage.IsAnimationPlaying));
 				// Apply platform constraints when the decoded size is available
 				UpdatePlatformMaxConstraints();
