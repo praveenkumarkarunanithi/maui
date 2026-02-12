@@ -95,10 +95,26 @@ namespace Microsoft.Maui.Platform
 			_currentPage = newPageStack[newPageStack.Count - 1];
 
 			_ = _currentPage ?? throw new InvalidOperationException("Navigation Request Contains Null Elements");
-			if (previousNavigationStack.Count < args.NavigationStack.Count)
+			
+			// Special handling for cross-Shell navigation:
+			// If we had a previous navigation and the new stack has only 1 page,
+			// this likely means we navigated to a new Shell, so we should treat it as a push
+			bool crossShellNavigation = !initialNavigation && 
+										previousNavigationStackCount > 0 && 
+										newPageStack.Count == 1 &&
+										newPageStack[0] != previousNavigationStack[0];
+			
+			if (previousNavigationStack.Count < args.NavigationStack.Count || crossShellNavigation)
 			{
 				Type destinationPageType = GetDestinationPageType();
 				NavigationStack = newPageStack;
+				
+				// For cross-Shell navigation, ensure we have a back stack entry
+				if (crossShellNavigation && NavigationFrame.BackStackDepth == 0)
+				{
+					NavigationFrame.BackStack.Insert(0, new PageStackEntry(GetDestinationPageType(), null, null));
+				}
+				
 				NavigationFrame.Navigate(destinationPageType, null, transition);
 			}
 			else if (previousNavigationStack.Count == args.NavigationStack.Count)
