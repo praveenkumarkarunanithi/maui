@@ -360,7 +360,96 @@ namespace Microsoft.Maui.Controls.Handlers.Items
 				return _emptyUIView.Frame.Size.ToSize();
 			}
 
-			return CollectionView.CollectionViewLayout.CollectionViewContentSize.ToSize();
+			var contentSize = CollectionView.CollectionViewLayout.CollectionViewContentSize.ToSize();
+
+			// For horizontal layouts, calculate content-based height instead of using container height
+			if (ItemsViewLayout?.ScrollDirection == UICollectionViewScrollDirection.Horizontal)
+			{
+				var contentHeight = CalculateContentHeightForHorizontalLayout();
+				if (contentHeight.HasValue)
+				{
+					contentSize.Height = contentHeight.Value;
+				}
+			}
+
+			return contentSize;
+		}
+
+		Size? CalculateContentHeightForHorizontalLayout()
+		{
+			if (ItemsViewLayout == null)
+				return null;
+
+			// For fixed item sizing, use the predetermined ItemSize height
+			if (ItemsViewLayout.ItemSizingStrategy == ItemSizingStrategy.MeasureFirstItem && 
+				!ItemsViewLayout.ItemSize.IsEmpty)
+			{
+				// For GridItemsLayout, multiply by span to get total height
+				if (ItemsView.ItemsLayout is GridItemsLayout gridLayout)
+				{
+					var verticalSpacing = gridLayout.VerticalItemSpacing * (gridLayout.Span - 1);
+					return ItemsViewLayout.ItemSize.Height * gridLayout.Span + verticalSpacing;
+				}
+				
+				// For LinearItemsLayout, height is just the single item height
+				return ItemsViewLayout.ItemSize.Height;
+			}
+
+			// For dynamic sizing, find the maximum height from measured cells
+			if (ItemsViewLayout.ItemSizingStrategy == ItemSizingStrategy.MeasureAllItems &&
+				!ItemsViewLayout.EstimatedItemSize.IsEmpty)
+			{
+				var maxCellHeight = FindMaximumCellHeight();
+				
+				if (maxCellHeight > 0)
+				{
+					// For GridItemsLayout, multiply by span to get total height  
+					if (ItemsView.ItemsLayout is GridItemsLayout gridLayout)
+					{
+						var verticalSpacing = gridLayout.VerticalItemSpacing * (gridLayout.Span - 1);
+						return maxCellHeight * gridLayout.Span + verticalSpacing;
+					}
+					
+					// For LinearItemsLayout, height is the maximum cell height
+					return maxCellHeight;
+				}
+				
+				// Fallback to estimated size
+				return ItemsViewLayout.EstimatedItemSize.Height;
+			}
+
+			return null;
+		}
+
+		double FindMaximumCellHeight()
+		{
+			var maxHeight = 0.0;
+
+			// Check visible cells first
+			if (CollectionView?.VisibleCells != null)
+			{
+				foreach (var cell in CollectionView.VisibleCells)
+				{
+					if (cell is ItemsViewCell itemsCell)
+					{
+						maxHeight = Math.Max(maxHeight, cell.Frame.Height);
+					}
+				}
+			}
+
+			// If no visible cells or height is still 0, try to measure a prototype
+			if (maxHeight <= 0 && ItemsViewLayout?.GetPrototype != null)
+			{
+				var prototype = ItemsViewLayout.GetPrototype() as ItemsViewCell;
+				if (prototype != null)
+				{
+					prototype.ConstrainTo(ItemsViewLayout.ConstrainedDimension);
+					var measure = prototype.Measure();
+					maxHeight = measure.Height;
+				}
+			}
+
+			return maxHeight;
 		}
 
 		void ConstrainItemsToBounds()
