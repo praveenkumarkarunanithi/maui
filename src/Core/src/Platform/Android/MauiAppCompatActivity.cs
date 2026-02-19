@@ -30,6 +30,18 @@ namespace Microsoft.Maui
 			base.OnCreate(savedInstanceState);
 			WindowCompat.SetDecorFitsSystemWindows(Window, false);
 
+			// Opt into drawing behind the display cutout (notch/punch-hole) on API 28-34.
+			// Without this, Android letterboxes the cutout with a black bar and reports zero
+			// DisplayCutout insets, which breaks SafeAreaEdges. API 35+ enables this by default.
+			if (Window?.Attributes is { } lp)
+			{
+				if (OperatingSystem.IsAndroidVersionAtLeast(30))
+					lp.LayoutInDisplayCutoutMode = LayoutInDisplayCutoutMode.Always;
+				else if (OperatingSystem.IsAndroidVersionAtLeast(28))
+					lp.LayoutInDisplayCutoutMode = LayoutInDisplayCutoutMode.ShortEdges;
+				Window.Attributes = lp;
+			}
+
 			if (IPlatformApplication.Current?.Application is not null)
 			{
 				this.CreatePlatformWindow(IPlatformApplication.Current.Application, savedInstanceState);
