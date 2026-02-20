@@ -135,10 +135,10 @@ namespace Microsoft.Maui.Platform
 			// within scroll views and explains how this interacts with the overall layout system.
 			var scrollViewParent = this.GetParentOfType<UIScrollView>();
 			_scrollViewDescendant = scrollViewParent is not null && scrollViewParent is not UICollectionView;
-			
+
 			// Cache whether this view is inside a UICollectionView for use in CrossPlatformArrange()
 			_collectionViewDescendant = scrollViewParent is UICollectionView;
-			
+
 			return !_scrollViewDescendant.Value;
 		}
 
@@ -311,7 +311,6 @@ namespace Microsoft.Maui.Platform
 			var baseSafeArea = _collectionViewDescendant == true && Window is not null
 				? Window.SafeAreaInsets.ToSafeAreaInsets()
 				: SafeAreaInsets.ToSafeAreaInsets();
-
 
 			// Check if keyboard-aware safe area adjustments are needed
 			if (View is ISafeAreaView2 safeAreaPage && _isKeyboardShowing)
@@ -505,7 +504,7 @@ namespace Microsoft.Maui.Platform
 		void CrossPlatformArrange(CGRect bounds)
 		{
 			// Force safe area revalidation for CollectionView cells when Window safe area changes.
-			if (View is ISafeAreaView or ISafeAreaView2 && _collectionViewDescendant == true && Window is not null)
+			if ((View is ISafeAreaView or ISafeAreaView2) && _collectionViewDescendant == true && Window is not null)
 			{
 				var currentWindowInsets = Window.SafeAreaInsets;
 				if (!currentWindowInsets.Equals(_lastWindowSafeAreaInsets))
@@ -515,7 +514,7 @@ namespace Microsoft.Maui.Platform
 					ValidateSafeArea();
 				}
 			}
-			
+
 			if (_appliesSafeAreaAdjustments)
 			{
 				bounds = AdjustForSafeArea(bounds);
