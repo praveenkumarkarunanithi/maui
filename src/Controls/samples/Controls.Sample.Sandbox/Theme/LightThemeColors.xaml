@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<local:CustomThemeDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+                    x:Class="Maui.Controls.Sample.LightThemeColors"
+                    xmlns:local="clr-namespace:Maui.Controls.Sample">
+
+    <x:String x:Key="CustomTheme">LightTheme</x:String>
+
+    <Color x:Key="PrimaryBorder">Green</Color>
+    <Color x:Key="PrimaryBackground">Red</Color>
+    
+    <Color x:Key="OnTrackBackground">Green</Color>
+    <Color x:Key="OffTrackBackground">Red</Color>
+    <Color x:Key="IndeterminateTrackBackground">HotPink</Color>
+
+    <!--<Color x:Key="CustomControlOnTrackBackground">Green</Color>-->
+    <Color x:Key="OnPressedTrackBackground">DarkGreen</Color>
+    <Color x:Key="OnHoverTrackBackground">LimeGreen</Color>
+    <Color x:Key="OnDisabledTrackBackground">LightGreen</Color>
+
+    <!--<Color x:Key="CustomControlOffTrackBackground">Red</Color>-->
+    <Color x:Key="OffPressedTrackBackground">DarkRed</Color>
+    <Color x:Key="OffHoverTrackBackground">IndianRed</Color>
+    <Color x:Key="OffDisabledTrackBackground">LightCoral</Color>
+
+    <!--<Color x:Key="IndeterminateTrackBackground">HotPink</Color>-->
+    <Color x:Key="IndeterminatePressedTrackBackground">DeepPink</Color>
+    <Color x:Key="IndeterminateHoverTrackBackground">LightPink</Color>
+    <Color x:Key="IndeterminateDisabledTrackBackground">PaleVioletRed</Color>
+
+</local:CustomThemeDictionary>

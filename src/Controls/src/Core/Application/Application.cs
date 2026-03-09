@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
@@ -374,9 +375,14 @@ namespace Microsoft.Maui.Controls
 
 		internal override void OnParentResourcesChanged(IEnumerable<KeyValuePair<string, object>> values)
 		{
+			var valuesList = values?.ToList() ?? new List<KeyValuePair<string, object>>();
+			var themeKeys = valuesList.Where(v => v.Key != null && (v.Key.Contains("Track", StringComparison.OrdinalIgnoreCase) || v.Key.Contains("Theme", StringComparison.OrdinalIgnoreCase) || v.Key.Contains("Background", StringComparison.OrdinalIgnoreCase))).ToList();
+			if (themeKeys.Count > 0)
+				System.Diagnostics.Debug.WriteLine($"[THEME-DBG-APP] Application.OnParentResourcesChanged: incoming themeKeys=[{string.Join(", ", themeKeys.Select(v => v.Key))}]");
+
 			if (!((IResourcesProvider)this).IsResourcesCreated || Resources.Count == 0)
 			{
-				base.OnParentResourcesChanged(values);
+				base.OnParentResourcesChanged(valuesList);
 				return;
 			}
 
@@ -384,11 +390,13 @@ namespace Microsoft.Maui.Controls
 			var changedResources = new List<KeyValuePair<string, object>>();
 			foreach (KeyValuePair<string, object> c in Resources)
 				innerKeys.Add(c.Key);
-			foreach (KeyValuePair<string, object> value in values)
+			foreach (KeyValuePair<string, object> value in valuesList)
 			{
 				if (innerKeys.Add(value.Key))
 					changedResources.Add(value);
 			}
+			if (themeKeys.Count > 0)
+				System.Diagnostics.Debug.WriteLine($"[THEME-DBG-APP] Application.OnParentResourcesChanged: passing through {changedResources.Count}/{valuesList.Count} keys (filtered by Application.Resources)");
 			OnResourcesChanged(changedResources);
 		}
 

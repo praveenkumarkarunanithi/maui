@@ -1,0 +1,125 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:Maui.Controls.Sample.Control"
+             xmlns:theme="clr-namespace:Maui.Controls.Sample"
+             x:Class="Maui.Controls.Sample.ControlStyling.CustomControlStyling">
+
+    <Style TargetType="local:CustomControl">
+        <Setter Property="VisualStateManager.VisualStateGroups">
+            <VisualStateGroupList>
+                <VisualStateGroup x:Name="CommonStates">
+                    <VisualState x:Name="On">
+                        <VisualState.Setters>
+                            <Setter Property="CustomControlSettings">
+                                <Setter.Value>
+                                    <local:CustomControlSettings TrackBackground="{DynamicResource CustomControlOnTrackBackground}"/>
+                                </Setter.Value>
+                            </Setter>
+                        </VisualState.Setters>
+                    </VisualState>
+                    <VisualState x:Name="OnPressed">
+                        <VisualState.Setters>
+                            <Setter Property="CustomControlSettings">
+                                <Setter.Value>
+                                    <local:CustomControlSettings TrackBackground="{DynamicResource CustomControlOnPressedTrackBackground}"/>
+                                </Setter.Value>
+                            </Setter>
+                        </VisualState.Setters>
+                    </VisualState>
+                    <VisualState x:Name="OnHovered">
+                        <VisualState.Setters>
+                            <Setter Property="CustomControlSettings">
+                                <Setter.Value>
+                                    <local:CustomControlSettings TrackBackground="{DynamicResource CustomControlOnHoverTrackBackground}"/>
+                                </Setter.Value>
+                            </Setter>
+                        </VisualState.Setters>
+                    </VisualState>
+                    <VisualState x:Name="OnDisabled">
+                        <VisualState.Setters>
+                            <Setter Property="CustomControlSettings">
+                                <Setter.Value>
+                                    <local:CustomControlSettings TrackBackground="{DynamicResource CustomControlOnDisabledTrackBackground}"/>
+                                </Setter.Value>
+                            </Setter>
+                        </VisualState.Setters>
+                    </VisualState>
+                    <VisualState x:Name="Off">
+                        <VisualState.Setters>
+                            <Setter Property="CustomControlSettings">
+                                <Setter.Value>
+                                    <local:CustomControlSettings TrackBackground="{DynamicResource CustomControlOffTrackBackground}"/>
+                                </Setter.Value>
+                            </Setter>
+                        </VisualState.Setters>
+                    </VisualState>
+                    <VisualState x:Name="OffPressed">
+                        <VisualState.Setters>
+                            <Setter Property="CustomControlSettings">
+                                <Setter.Value>
+                                    <local:CustomControlSettings TrackBackground="{DynamicResource CustomControlOffPressedTrackBackground}"/>
+                                </Setter.Value>
+                            </Setter>
+                        </VisualState.Setters>
+                    </VisualState>
+                    <VisualState x:Name="OffHovered">
+                        <VisualState.Setters>
+                            <Setter Property="CustomControlSettings">
+                                <Setter.Value>
+                                    <local:CustomControlSettings TrackBackground="{DynamicResource CustomControlOffHoverTrackBackground}"/>
+                                </Setter.Value>
+                            </Setter>
+                        </VisualState.Setters>
+                    </VisualState>
+                    <VisualState x:Name="OffDisabled">
+                        <VisualState.Setters>
+                            <Setter Property="CustomControlSettings">
+                                <Setter.Value>
+                                    <local:CustomControlSettings TrackBackground="{DynamicResource CustomControlOffDisabledTrackBackground}"/>
+                                </Setter.Value>
+                            </Setter>
+                        </VisualState.Setters>
+                    </VisualState>
+                    <VisualState x:Name="Indeterminate">
+                        <VisualState.Setters>
+                            <Setter Property="CustomControlSettings">
+                                <Setter.Value>
+                                    <local:CustomControlSettings TrackBackground="{DynamicResource IndeterminateTrackBackground}"/>
+                                </Setter.Value>
+                            </Setter>
+                        </VisualState.Setters>
+                    </VisualState>
+                    <VisualState x:Name="IndeterminatePressed">
+                        <VisualState.Setters>
+                            <Setter Property="CustomControlSettings">
+                                <Setter.Value>
+                                    <local:CustomControlSettings TrackBackground="{DynamicResource IndeterminatePressedTrackBackground}"/>
+                                </Setter.Value>
+                            </Setter>
+                        </VisualState.Setters>
+                    </VisualState>
+                    <VisualState x:Name="IndeterminateHovered">
+                        <VisualState.Setters>
+                            <Setter Property="CustomControlSettings">
+                                <Setter.Value>
+                                    <local:CustomControlSettings TrackBackground="{DynamicResource IndeterminateHoverTrackBackground}"/>
+                                </Setter.Value>
+                            </Setter>
+                        </VisualState.Setters>
+                    </VisualState>
+                    <VisualState x:Name="IndeterminateDisabled">
+                        <VisualState.Setters>
+                            <Setter Property="CustomControlSettings">
+                                <Setter.Value>
+                                    <local:CustomControlSettings TrackBackground="{DynamicResource IndeterminateDisabledTrackBackground}"/>
+                                </Setter.Value>
+                            </Setter>
+                        </VisualState.Setters>
+                    </VisualState>
+                </VisualStateGroup>
+            </VisualStateGroupList>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

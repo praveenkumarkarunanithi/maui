@@ -1,5 +1,23 @@
-﻿<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="Maui.Controls.Sample.MainPage"
-             xmlns:local="clr-namespace:Maui.Controls.Sample">
+             xmlns:control="clr-namespace:Maui.Controls.Sample.Control"
+             x:Class="Maui.Controls.Sample.MainPage">
+
+    <ScrollView>
+        <Grid ColumnDefinitions="*,*" RowDefinitions="*,*,*,*" HorizontalOptions="Center" VerticalOptions="Center">
+            <Picker x:Name="customPicker2" WidthRequest="150" HorizontalOptions="Center" VerticalOptions="Center" SelectedIndexChanged="customPicker_SelectedIndexChanged"/>
+            <control:CustomControl x:Name="customControl2" Grid.Column="1" IsOn="False"/>
+
+            <Picker x:Name="customPicker1" WidthRequest="150" Grid.Row="1" HorizontalOptions="Center" VerticalOptions="Center"  SelectedIndexChanged="customPicker_SelectedIndexChanged"/>
+            <control:CustomControl x:Name="customControl1" Grid.Row="1" Grid.Column="1" IsOn="{x:Null}"/>
+
+            <Picker x:Name="customPicker3" WidthRequest="150" Grid.Row="2" HorizontalOptions="Center" VerticalOptions="Center"  SelectedIndexChanged="customPicker_SelectedIndexChanged"/>
+            <control:CustomControl x:Name="customControl3" Grid.Row="2" Grid.Column="1" IsOn="True"/>
+
+            <Label Text="Change Theme" Grid.Row="3" HorizontalOptions="Center" VerticalOptions="Center"/>
+            <Switch IsToggled="False" Grid.Row="3" Grid.Column="1" HorizontalOptions="Center" VerticalOptions="Center" Toggled="Switch_Toggled" x:Name="themeSwitch"/>
+        </Grid>
+    </ScrollView>
+
 </ContentPage>

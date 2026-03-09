@@ -144,6 +144,7 @@ namespace Microsoft.Maui.Controls
 			// Collection has been cleared
 			if (e.Action == NotifyCollectionChangedAction.Reset)
 			{
+				System.Diagnostics.Debug.WriteLine($"[THEME-DBG-RD] {GetType().Name}.MergedDictionaries RESET (Clear) — NO ValuesChanged fired, tracking {_collectionTrack.Count} dicts");
 				foreach (var dictionary in _collectionTrack)
 					dictionary.ValuesChanged -= Item_ValuesChanged;
 
@@ -159,7 +160,9 @@ namespace Microsoft.Maui.Controls
 					var rd = (ResourceDictionary)item;
 					_collectionTrack.Add(rd);
 					rd.ValuesChanged += Item_ValuesChanged;
-					OnValuesChanged(rd.ToArray());
+					var kvps = rd.ToArray();
+					System.Diagnostics.Debug.WriteLine($"[THEME-DBG-RD] {GetType().Name}.MergedDictionaries ADD {rd.GetType().Name}: firing OnValuesChanged with {kvps.Length} entries: [{string.Join(", ", kvps.Take(5).Select(v => v.Key))}...]");
+					OnValuesChanged(kvps);
 				}
 			}
 
@@ -420,6 +423,7 @@ namespace Microsoft.Maui.Controls
 		{
 			if (values == null || values.Length == 0)
 				return;
+			System.Diagnostics.Debug.WriteLine($"[THEME-DBG-RD] {GetType().Name}.OnValuesChanged: {string.Join(", ", values.Select(v => $"{v.Key}={v.Value}"))}");
 			ValuesChanged?.Invoke(this, new ResourcesChangedEventArgs(values));
 		}
 

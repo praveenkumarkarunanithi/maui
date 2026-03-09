@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--<?xaml-comp compile="true" ?>-->
+<local:CustomThemeDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+                    x:Class="Maui.Controls.Sample.DefaultTheme"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib"
+                    xmlns:local="clr-namespace:Maui.Controls.Sample">
+
+    <!--CustomTheme-->
+    <x:String x:Key="CustomControlTheme">CommonTheme</x:String>
+    <local:StaticThemeResource x:Key="DefaultBackground" ResourceKey="PrimaryBackground"/>
+    <local:StaticThemeResource x:Key="DefaultBorderColor" ResourceKey="PrimaryBorder"/>
+    
+    
+    <!--<local:StaticThemeResource x:Key="CustomControlOnTrackBackground" ResourceKey="OnTrackBackground"/>
+    <local:StaticThemeResource x:Key="CustomControlOffTrackBackground" ResourceKey="OffTrackBackground"/>
+    <local:StaticThemeResource x:Key="IndeterminateTrackBackground" ResourceKey="IndeterminateTrackBackground"/>-->
+
+    <local:StaticThemeResource x:Key="CustomControlOnTrackBackground"
+                               ResourceKey="OnTrackBackground"/>
+    <local:StaticThemeResource x:Key="CustomControlOnPressedTrackBackground"
+                               ResourceKey="OnPressedTrackBackground"/>
+    <local:StaticThemeResource x:Key="CustomControlOnHoverTrackBackground"
+                               ResourceKey="OnHoverTrackBackground"/>
+    <local:StaticThemeResource x:Key="CustomControlOnDisabledTrackBackground"
+                               ResourceKey="OnDisabledTrackBackground"/>
+
+    <local:StaticThemeResource x:Key="CustomControlOffTrackBackground"
+                               ResourceKey="OffTrackBackground"/>
+    <local:StaticThemeResource x:Key="CustomControlOffPressedTrackBackground"
+                               ResourceKey="OffPressedTrackBackground"/>
+    <local:StaticThemeResource x:Key="CustomControlOffHoverTrackBackground"
+                               ResourceKey="OffHoverTrackBackground"/>
+    <local:StaticThemeResource x:Key="CustomControlOffDisabledTrackBackground"
+                               ResourceKey="OffDisabledTrackBackground"/>
+
+    <local:StaticThemeResource x:Key="IndeterminateTrackBackground"
+                               ResourceKey="IndeterminateTrackBackground"/>
+    <local:StaticThemeResource x:Key="IndeterminatePressedTrackBackground"
+                               ResourceKey="IndeterminatePressedTrackBackground"/>
+    <local:StaticThemeResource x:Key="IndeterminateHoverTrackBackground"
+                               ResourceKey="IndeterminateHoverTrackBackground"/>
+    <local:StaticThemeResource x:Key="IndeterminateDisabledTrackBackground"
+                               ResourceKey="IndeterminateDisabledTrackBackground"/>
+
+</local:CustomThemeDictionary>

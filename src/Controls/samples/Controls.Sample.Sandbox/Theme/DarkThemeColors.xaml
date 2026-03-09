@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<local:CustomThemeDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+                    x:Class="Maui.Controls.Sample.DarkThemeColors"
+                    xmlns:local="clr-namespace:Maui.Controls.Sample">
+
+    <x:String x:Key="CustomTheme">DarkTheme</x:String>
+
+    <Color x:Key="PrimaryBorder">Red</Color>
+    <Color x:Key="PrimaryBackground">Green</Color>
+    
+    <Color x:Key="OnTrackBackground">Blue</Color>
+    <Color x:Key="OffTrackBackground">Yellow</Color>
+    <Color x:Key="IndeterminateTrackBackground">SkyBlue</Color>
+
+    <Color x:Key="OnPressedTrackBackground">DarkBlue</Color>
+    <Color x:Key="OnHoverTrackBackground">RoyalBlue</Color>
+    <Color x:Key="OnDisabledTrackBackground">LightSteelBlue</Color>
+
+    <Color x:Key="OffPressedTrackBackground">GoldenRod</Color>
+    <Color x:Key="OffHoverTrackBackground">Khaki</Color>
+    <Color x:Key="OffDisabledTrackBackground">LightGoldenrodYellow</Color>
+
+    <Color x:Key="IndeterminatePressedTrackBackground">DeepSkyBlue</Color>
+    <Color x:Key="IndeterminateHoverTrackBackground">LightSkyBlue</Color>
+    <Color x:Key="IndeterminateDisabledTrackBackground">LightCyan</Color>
+
+</local:CustomThemeDictionary>

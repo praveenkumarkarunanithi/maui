@@ -1,24 +1,15 @@
-﻿namespace Maui.Controls.Sample;
-
-public partial class App : Application
+﻿namespace Maui.Controls.Sample
 {
-	public App()
-	{
-		InitializeComponent();
-	}
+    public partial class App : Application
+    {
+        public App()
+        {
+            InitializeComponent();
+        }
 
-	protected override Window CreateWindow(IActivationState? activationState)
-	{
-		// To test shell scenarios, change this to true
-		bool useShell = false;
-
-		if (!useShell)
-		{
-			return new Window(new NavigationPage(new MainPage()));
-		}
-		else
-		{
-			return new Window(new SandboxShell());
-		}
-	}
+        protected override Window CreateWindow(IActivationState? activationState)
+        {
+            return new Window(new AppShell());
+        }
+    }
 }
