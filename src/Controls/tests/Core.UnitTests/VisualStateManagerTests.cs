@@ -534,5 +534,152 @@ namespace Microsoft.Maui.Controls.Core.UnitTests
 			Debug.WriteLine($">>>>> VisualStateManagerTests ValidatePerformance: {watch.ElapsedMilliseconds}ms over {iterations} iterations; average of {average}ms");
 
 		}
-	}
+
+		// Regression tests for https://github.com/dotnet/maui/issues/28606
+		// VSM setter with an Element value that uses DynamicResource must propagate
+		// resource/theme changes to ALL controls that have the setter applied, not just the last one.
+
+		/// <summary>
+		/// Minimal Element subclass with a Color BindableProperty that can receive DynamicResource.
+		/// Mirrors the role of CustomControlSettings in issue #28606.
+		/// </summary>
+		class ThemeSettings : Element
+		{
+			public static readonly BindableProperty ThemeColorProperty =
+				BindableProperty.Create(nameof(ThemeColor), typeof(Color), typeof(ThemeSettings), Colors.Transparent);
+
+			public Color ThemeColor
+			{
+				get => (Color)GetValue(ThemeColorProperty);
+				set => SetValue(ThemeColorProperty, value);
+			}
+		}
+
+		/// <summary>
+		/// Minimal host control with a BindableProperty that accepts a ThemeSettings element.
+		/// Mirrors the role of CustomControl in issue #28606.
+		///
+		/// Intentionally does NOT set settings.Parent in the propertyChanged callback — this means
+		/// the ONLY path for ThemeSettings to receive resource-change notifications is via the
+		/// closure-based listeners registered by Setter.Apply (the fix for #28606).
+		/// If ThemeSettings received resources through its Parent instead, the Setter.cs fix
+		/// would not be required, and the test would not catch regressions.
+		/// </summary>
+		class ThemeControl : View
+		{
+			public static readonly BindableProperty SettingsProperty =
+				BindableProperty.Create(nameof(Settings), typeof(ThemeSettings), typeof(ThemeControl), null);
+
+			public ThemeSettings Settings
+			{
+				get => (ThemeSettings)GetValue(SettingsProperty);
+				set => SetValue(SettingsProperty, value);
+			}
+		}
+
+		/// <summary>
+		/// When a VSM Setter.Value is an Element with a DynamicResource binding, swapping the
+		/// resource dictionary (theme change) must update ALL controls that have the setter
+		/// applied — not just the last one.
+		///
+		/// Root cause: a single VSM state's Setter instance is applied to every control using
+		/// that style. Without the fix, each Setter.Apply(target) calls SetParent on the shared
+		/// Element value, which removes the resource-change listener from the previous target —
+		/// only the last target ever receives theme update notifications.
+		///
+		/// With the Setter.cs fix: Setter.Apply registers a unique closure-based listener on
+		/// each target directly, bypassing SetParent collisions so every target keeps its
+		/// registration and the shared Element value receives notifications via all of them.
+		///
+		/// The ThemeControl here intentionally does NOT set settings.Parent so that the
+		/// Setter.cs listeners are the only path for resource propagation into ThemeSettings.
+		/// </summary>
+		[Fact]
+		public void VSMElementValuedSetter_DynamicResource_PropagatesThemeChangeToAllTargets()
+		{
+			// Arrange — application with a theme resource dictionary.
+			Application.Current = new MockApplication();
+			var lightTheme = new ResourceDictionary { { "ThemeColor", Colors.Red } };
+			var darkTheme = new ResourceDictionary { { "ThemeColor", Colors.Blue } };
+			Application.Current.Resources.MergedDictionaries.Add(lightTheme);
+
+			// sharedSettings: one Element instance per VSM state, shared across all styled controls.
+			// This matches how a single <VisualState> Setter is applied to every control that uses
+			// the same implicit style (e.g. a Style targeted at ThemeControl in App.xaml).
+			var sharedSettings = new ThemeSettings();
+			sharedSettings.SetDynamicResource(ThemeSettings.ThemeColorProperty, "ThemeColor");
+
+			// The ONE Setter instance (same object) that VSM internally applies to every control.
+			var setter = new Setter
+			{
+				Property = ThemeControl.SettingsProperty,
+				Value = sharedSettings
+			};
+
+			// Two controls — both in the visual tree so they receive resource-changed notifications,
+			// but sharedSettings.Parent is never set, so notifications can only reach sharedSettings
+			// via the closure listeners that Setter.Apply registers (the fix).
+			var control1 = new ThemeControl();
+			var control2 = new ThemeControl();
+			var page = new ContentPage
+			{
+				Content = new StackLayout { Children = { control1, control2 } }
+			};
+			Application.Current.LoadPage(page);
+
+			// Simulate VSM applying the same state setter to both controls (what GoToState does).
+			var specificity = new SetterSpecificity();
+			setter.Apply(control1, specificity);
+			setter.Apply(control2, specificity);
+
+			// Verify initial state — both controls already resolve the correct resource.
+			Assert.Equal(Colors.Red, control1.Settings?.ThemeColor);
+			Assert.Equal(Colors.Red, control2.Settings?.ThemeColor);
+
+			// Act — swap to dark theme (simulates MergedDictionaries replacement / theme toggle).
+			Application.Current.Resources.MergedDictionaries.Clear();
+			Application.Current.Resources.MergedDictionaries.Add(darkTheme);
+
+			// Assert — BOTH controls must reflect the updated color.
+			// Without the Setter.cs fix, sharedSettings is never notified (no Parent, no listener)
+			// so ThemeColor stays Red for both controls.
+			Assert.Equal(Colors.Blue, control1.Settings?.ThemeColor);
+			Assert.Equal(Colors.Blue, control2.Settings?.ThemeColor);
+
+			Application.Current = null;
+		}
+
+		/// <summary>
+		/// After Setter.UnApply the per-target resource listener must be removed so the
+		/// control's SettingsProperty is cleared and no longer receives theme updates.
+		/// </summary>
+		[Fact]
+		public void VSMElementValuedSetter_UnApply_RemovesResourceListener()
+		{
+			Application.Current = new MockApplication();
+			var lightTheme = new ResourceDictionary { { "ThemeColor", Colors.Red } };
+			var darkTheme = new ResourceDictionary { { "ThemeColor", Colors.Blue } };
+			Application.Current.Resources.MergedDictionaries.Add(lightTheme);
+
+			var sharedSettings = new ThemeSettings();
+			sharedSettings.SetDynamicResource(ThemeSettings.ThemeColorProperty, "ThemeColor");
+
+			var setter = new Setter { Property = ThemeControl.SettingsProperty, Value = sharedSettings };
+			var specificity = new SetterSpecificity();
+
+			var control = new ThemeControl();
+			Application.Current.LoadPage(new ContentPage { Content = control });
+
+			setter.Apply(control, specificity);
+			Assert.Equal(Colors.Red, control.Settings?.ThemeColor);
+
+			// Simulate VSM leaving the state — UnApply must clear the SettingsProperty.
+			setter.UnApply(control, specificity);
+
+			// ClearValue is called by UnApply, so Settings returns to its default (null).
+			Assert.Null(control.Settings);
+
+			Application.Current = null;
+		}
+}
 }

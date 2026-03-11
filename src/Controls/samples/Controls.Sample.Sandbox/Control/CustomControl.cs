@@ -63,13 +63,11 @@ namespace Maui.Controls.Sample.Control
         private static void OnCustomControlSettingsPropertyChanged(BindableObject bindable, object oldValue, object newValue)
         {
             var ctrl = bindable as CustomControl;
-            System.Diagnostics.Debug.WriteLine($"[THEME-DBG] CustomControl({ctrl?.GetHashCode()}).CustomControlSettings changed: old={oldValue?.GetHashCode()} new={newValue?.GetHashCode()}");
 
             // Unsubscribe from the OLD settings (not the new one — prior code had this reversed)
             if (oldValue is CustomControlSettings previousSetting)
             {
                 previousSetting.PropertyChanged -= ctrl.OnDefaultCustomControlSettings_PropertyChanged;
-                System.Diagnostics.Debug.WriteLine($"[THEME-DBG] Disconnecting old Settings({previousSetting.GetHashCode()}) from Control({ctrl?.GetHashCode()}), setting Parent=null");
                 previousSetting.customControl = null;
                 previousSetting.BindingContext = null;
                 SetInheritedBindingContext(previousSetting, null);
@@ -80,37 +78,21 @@ namespace Maui.Controls.Sample.Control
             {
                 // Subscribe to the NEW settings
                 currentSetting.PropertyChanged += customControl.OnDefaultCustomControlSettings_PropertyChanged;
-                System.Diagnostics.Debug.WriteLine($"[THEME-DBG] CustomControl({customControl.GetHashCode()}) subscribed PropertyChanged to Settings({currentSetting.GetHashCode()})");
-
-                System.Diagnostics.Debug.WriteLine($"[THEME-DBG] Connecting Settings({currentSetting.GetHashCode()}) to Control({customControl.GetHashCode()})");
                 currentSetting.Parent = currentSetting.CustomControl = customControl;
                 customControl.UpdateCurrentStyle();
                 SetInheritedBindingContext(currentSetting, customControl.BindingContext);
-                System.Diagnostics.Debug.WriteLine($"[THEME-DBG] Settings({currentSetting.GetHashCode()}) parented to Control({customControl.GetHashCode()}). TrackBackground={currentSetting.TrackBackground}");
             }
         }
 
         void OnDefaultCustomControlSettings_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            var senderSettings = sender as CustomControlSettings;
-            System.Diagnostics.Debug.WriteLine(
-                $"[THEME-DBG] PropChanged on Settings({senderSettings?.GetHashCode()}): PropertyName='{e.PropertyName}', control={GetHashCode()}, mySettings={CustomControlSettings?.GetHashCode()}");
-
             // Only act if the firing settings is our CURRENT settings.
             // Stale subscriptions from previous states must not apply wrong interim colors.
             if (!ReferenceEquals(sender, CustomControlSettings))
-            {
-                System.Diagnostics.Debug.WriteLine($"[THEME-DBG] Skipping PropChanged — sender != current settings, no-op");
                 return;
-            }
 
             if (e.PropertyName == nameof(CustomControlSettings.TrackBackground) || e.PropertyName == null)
             {
-                var currentSettings = CustomControlSettings;
-                System.Diagnostics.Debug.WriteLine(
-                    $"[THEME-DBG] PropertyChanged FIRED: control={GetHashCode()}, " +
-                    $"sender={senderSettings?.GetHashCode()}, newColor={senderSettings?.TrackBackground}, " +
-                    $"mySettings={currentSettings?.GetHashCode()}, myColor={currentSettings?.TrackBackground}");
                 UpdateCurrentStyle();
             }
         }
@@ -157,9 +139,7 @@ namespace Maui.Controls.Sample.Control
         {
             if (_box is not null && CustomControlSettings is not null)
             {
-                var newColor = CustomControlSettings.TrackBackground;
-                System.Diagnostics.Debug.WriteLine($"[THEME-DBG] Control({GetHashCode()}).UpdateCurrentStyle: Settings({CustomControlSettings.GetHashCode()}).TrackBackground={newColor} → _box was {_box.BackgroundColor}");
-                _box.BackgroundColor = newColor;
+                _box.BackgroundColor = CustomControlSettings.TrackBackground;
             }
         }
 

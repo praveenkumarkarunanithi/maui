@@ -101,10 +101,9 @@ namespace Microsoft.Maui.Controls
 				// controls. We register a UNIQUE closure-based listener per (Setter, target) pair
 				// so that Element.SetParent's RemoveResourcesChangedListener calls (which use the
 				// direct method reference) never accidentally remove our registration from other targets.
+				// Fix for https://github.com/dotnet/maui/issues/28606.
 				if (Value is Element elementValue && targetObject is IElementDefinition targetDef)
 				{
-					System.Diagnostics.Debug.WriteLine($"[THEME-DBG-SETTER] Apply: Element({elementValue.GetHashCode()}) → Target({targetObject.GetHashCode()}:{targetObject.GetType().Name}): registering resource listener");
-
 					// Remove any existing listener for this target first (handles re-apply case).
 					if (_appliedElementListeners?.TryGetValue(targetObject, out var existingListener) == true)
 					{
@@ -118,8 +117,6 @@ namespace Microsoft.Maui.Controls
 					Action<object, ResourcesChangedEventArgs> listener = (s, e) => elementValue.OnParentResourcesChanged(s, e);
 					targetDef.AddResourcesChangedListener(listener);
 					(_appliedElementListeners ??= new Dictionary<BindableObject, Action<object, ResourcesChangedEventArgs>>())[targetObject] = listener;
-
-					System.Diagnostics.Debug.WriteLine($"[THEME-DBG-SETTER] Apply done: Element({elementValue.GetType().Name}/{elementValue.GetHashCode()}) listener registered on Target({targetObject.GetHashCode()})");
 				}
 			}
 		}
@@ -144,7 +141,6 @@ namespace Microsoft.Maui.Controls
 			// Undo the direct resource-listener registration added in Apply.
 			if (Value is Element elementValue && targetObject is IElementDefinition targetDef)
 			{
-				System.Diagnostics.Debug.WriteLine($"[THEME-DBG-SETTER] UnApply: removing Element({elementValue.GetHashCode()}) listener from Target({targetObject.GetHashCode()})");
 				if (_appliedElementListeners?.TryGetValue(targetObject, out var listener) == true)
 				{
 					targetDef.RemoveResourcesChangedListener(listener);

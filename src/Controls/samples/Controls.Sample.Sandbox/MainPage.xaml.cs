@@ -24,7 +24,6 @@ namespace Maui.Controls.Sample
 
     private void Switch_Toggled(object sender, ToggledEventArgs e)
     {
-        System.Diagnostics.Debug.WriteLine($"[THEME-DBG] ===== Switch_Toggled: IsToggled={themeSwitch.IsToggled} =====");
         if(Application.Current is not null)
         {
             ICollection<ResourceDictionary> mergedDictionaries = Application.Current.Resources.MergedDictionaries;
@@ -35,17 +34,14 @@ namespace Maui.Controls.Sample
                 {
                     if (themeSwitch.IsToggled)
                     {
-                        System.Diagnostics.Debug.WriteLine($"[THEME-DBG] Setting DarkDefault theme...");
                         theme.VisualTheme = ThemeVisuals.DarkDefault;
                         Application.Current.UserAppTheme = AppTheme.Dark;
                     }
                     else
                     {
-                        System.Diagnostics.Debug.WriteLine($"[THEME-DBG] Setting LightDefault theme...");
                         theme.VisualTheme = ThemeVisuals.LightDefault;
                         Application.Current.UserAppTheme = AppTheme.Light;
                     }
-                    System.Diagnostics.Debug.WriteLine($"[THEME-DBG] ===== Theme change complete =====");
                 }
             }
         }

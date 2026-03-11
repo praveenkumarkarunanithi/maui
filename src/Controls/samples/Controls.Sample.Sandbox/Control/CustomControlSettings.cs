@@ -70,10 +70,8 @@ BindableProperty.Create(nameof(TrackBackground), typeof(Color), typeof(CustomCon
 
         private static void OnTrackBackgroundPropertyChanged(BindableObject bindable, object oldValue, object newValue)
         {
-           System.Diagnostics.Debug.WriteLine($"[THEME-DBG] Settings({bindable.GetHashCode()}).TrackBackground changed: {oldValue} → {newValue}, customControl={((CustomControlSettings)bindable).customControl?.GetHashCode()}");
            if (bindable is CustomControlSettings settings && settings.customControl is not null)
            {
-               System.Diagnostics.Debug.WriteLine($"[THEME-DBG] Settings → directly updating Control({settings.customControl.GetHashCode()})._box");
                settings.customControl._box.BackgroundColor = (Color)newValue;
            }
         }

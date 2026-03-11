@@ -376,9 +376,6 @@ namespace Microsoft.Maui.Controls
 		internal override void OnParentResourcesChanged(IEnumerable<KeyValuePair<string, object>> values)
 		{
 			var valuesList = values?.ToList() ?? new List<KeyValuePair<string, object>>();
-			var themeKeys = valuesList.Where(v => v.Key != null && (v.Key.Contains("Track", StringComparison.OrdinalIgnoreCase) || v.Key.Contains("Theme", StringComparison.OrdinalIgnoreCase) || v.Key.Contains("Background", StringComparison.OrdinalIgnoreCase))).ToList();
-			if (themeKeys.Count > 0)
-				System.Diagnostics.Debug.WriteLine($"[THEME-DBG-APP] Application.OnParentResourcesChanged: incoming themeKeys=[{string.Join(", ", themeKeys.Select(v => v.Key))}]");
 
 			if (!((IResourcesProvider)this).IsResourcesCreated || Resources.Count == 0)
 			{
@@ -395,8 +392,6 @@ namespace Microsoft.Maui.Controls
 				if (innerKeys.Add(value.Key))
 					changedResources.Add(value);
 			}
-			if (themeKeys.Count > 0)
-				System.Diagnostics.Debug.WriteLine($"[THEME-DBG-APP] Application.OnParentResourcesChanged: passing through {changedResources.Count}/{valuesList.Count} keys (filtered by Application.Resources)");
 			OnResourcesChanged(changedResources);
 		}
 

@@ -411,7 +411,6 @@ namespace Microsoft.Maui.Controls
 
 			if (realParent is IElementDefinition element)
 			{
-				System.Diagnostics.Debug.WriteLine($"[THEME-DBG-EL] {GetType().Name}({GetHashCode()}).SetParent: RemoveListener from old parent {realParent?.GetType().Name}({realParent?.GetHashCode()})");
 				element.RemoveResourcesChangedListener(OnParentResourcesChanged);
 
 				if (value != null && (element is Layout || element is IControlTemplated))
@@ -423,7 +422,6 @@ namespace Microsoft.Maui.Controls
 			RealParent = value;
 			if (RealParent != null)
 			{
-				System.Diagnostics.Debug.WriteLine($"[THEME-DBG-EL] {GetType().Name}({GetHashCode()}).SetParent: AddListener to new parent {value?.GetType().Name}({value?.GetHashCode()})");
 				OnParentResourcesChanged(RealParent.GetMergedResources());
 				((IElementDefinition)RealParent).AddResourcesChangedListener(OnParentResourcesChanged);
 			}
@@ -795,13 +793,7 @@ namespace Microsoft.Maui.Controls
 		{
 			if (values == null)
 				return;
-			// Only log for THEME-related keys to avoid noise
 			var valuesList = values.ToList();
-			var themeKeys = valuesList.Where(v => v.Key != null && (v.Key.Contains("Track", StringComparison.OrdinalIgnoreCase) || v.Key.Contains("Theme", StringComparison.OrdinalIgnoreCase) || v.Key.Contains("Background", StringComparison.OrdinalIgnoreCase))).ToList();
-			if (themeKeys.Count > 0)
-			{
-				System.Diagnostics.Debug.WriteLine($"[THEME-DBG-EL] {GetType().Name}({GetHashCode()}).OnResourcesChanged: themeKeys=[{string.Join(", ", themeKeys.Select(v => v.Key))}], _changeHandlers={_changeHandlers?.Count ?? 0}, _dynamicResources={_dynamicResources?.Count ?? 0}");
-			}
 			if (_changeHandlers != null)
 				foreach (Action<object, ResourcesChangedEventArgs> handler in _changeHandlers.ToList())
 					handler(this, new ResourcesChangedEventArgs(valuesList));
@@ -825,7 +817,6 @@ namespace Microsoft.Maui.Controls
 				}
 				if (changedResources == null)
 					continue;
-				System.Diagnostics.Debug.WriteLine($"[THEME-DBG-EL] {GetType().Name}({GetHashCode()}) MATCH found: key={value.Key}, updating {changedResources.Count} properties");
 				foreach ((BindableProperty, SetterSpecificity) changedResource in changedResources)
 					OnResourceChanged(changedResource.Item1, value.Value, changedResource.Item2);
 
