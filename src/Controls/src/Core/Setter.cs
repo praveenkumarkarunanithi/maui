@@ -137,7 +137,7 @@ namespace Microsoft.Maui.Controls
 			else if (Value is DynamicResource dynamicResource)
 				targetObject.RemoveDynamicResource(Property, specificity);
 
-			// Remove the per-target resource listener registered in Apply (fix for #28606).
+			// Remove the per-target resource listener registered in Apply.
 			if (_appliedElementListeners?.TryGetValue(targetObject, out var elementListener) == true)
 			{
 				if (targetObject is IElementDefinition def)
