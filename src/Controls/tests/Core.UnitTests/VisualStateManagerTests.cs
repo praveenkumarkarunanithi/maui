@@ -534,5 +534,94 @@ namespace Microsoft.Maui.Controls.Core.UnitTests
 			Debug.WriteLine($">>>>> VisualStateManagerTests ValidatePerformance: {watch.ElapsedMilliseconds}ms over {iterations} iterations; average of {average}ms");
 
 		}
+
+		class ThemeSettings : Element
+		{
+			public static readonly BindableProperty ThemeColorProperty =
+				BindableProperty.Create(nameof(ThemeColor), typeof(Color), typeof(ThemeSettings), Colors.Transparent);
+
+			public Color ThemeColor
+			{
+				get => (Color)GetValue(ThemeColorProperty);
+				set => SetValue(ThemeColorProperty, value);
+			}
+		}
+
+		// Intentionally omits setting settings.Parent so the only resource-notification path
+		// is via the listeners Setter.Apply registers — which is what the fix under test provides.
+		class ThemeControl : View
+		{
+			public static readonly BindableProperty SettingsProperty =
+				BindableProperty.Create(nameof(Settings), typeof(ThemeSettings), typeof(ThemeControl), null);
+
+			public ThemeSettings Settings
+			{
+				get => (ThemeSettings)GetValue(SettingsProperty);
+				set => SetValue(SettingsProperty, value);
+			}
+		}
+
+		[Fact]
+		//https://github.com/dotnet/maui/issues/28606
+		public void VSMElementValuedSetter_DynamicResource_PropagatesThemeChangeToAllTargets()
+		{
+			Application.Current = new MockApplication();
+			var lightTheme = new ResourceDictionary { { "ThemeColor", Colors.Red } };
+			var darkTheme = new ResourceDictionary { { "ThemeColor", Colors.Blue } };
+			Application.Current.Resources.MergedDictionaries.Add(lightTheme);
+
+			// Shared Element value — one Setter instance is applied to every control using the same style.
+			var sharedSettings = new ThemeSettings();
+			sharedSettings.SetDynamicResource(ThemeSettings.ThemeColorProperty, "ThemeColor");
+
+			var setter = new Setter { Property = ThemeControl.SettingsProperty, Value = sharedSettings };
+
+			var control1 = new ThemeControl();
+			var control2 = new ThemeControl();
+			Application.Current.LoadPage(new ContentPage
+			{
+				Content = new StackLayout { Children = { control1, control2 } }
+			});
+
+			var specificity = new SetterSpecificity();
+			setter.Apply(control1, specificity);
+			setter.Apply(control2, specificity);
+
+			Assert.Equal(Colors.Red, control1.Settings?.ThemeColor);
+			Assert.Equal(Colors.Red, control2.Settings?.ThemeColor);
+
+			Application.Current.Resources.MergedDictionaries.Clear();
+			Application.Current.Resources.MergedDictionaries.Add(darkTheme);
+
+			Assert.Equal(Colors.Blue, control1.Settings?.ThemeColor);
+			Assert.Equal(Colors.Blue, control2.Settings?.ThemeColor);
+
+			Application.Current = null;
+		}
+
+		[Fact]
+		//https://github.com/dotnet/maui/issues/28606
+		public void VSMElementValuedSetter_UnApply_RemovesResourceListener()
+		{
+			Application.Current = new MockApplication();
+			Application.Current.Resources.MergedDictionaries.Add(new ResourceDictionary { { "ThemeColor", Colors.Red } });
+
+			var sharedSettings = new ThemeSettings();
+			sharedSettings.SetDynamicResource(ThemeSettings.ThemeColorProperty, "ThemeColor");
+
+			var setter = new Setter { Property = ThemeControl.SettingsProperty, Value = sharedSettings };
+			var specificity = new SetterSpecificity();
+
+			var control = new ThemeControl();
+			Application.Current.LoadPage(new ContentPage { Content = control });
+
+			setter.Apply(control, specificity);
+			Assert.Equal(Colors.Red, control.Settings?.ThemeColor);
+
+			setter.UnApply(control, specificity);
+			Assert.Null(control.Settings);
+
+			Application.Current = null;
+		}
 	}
 }
