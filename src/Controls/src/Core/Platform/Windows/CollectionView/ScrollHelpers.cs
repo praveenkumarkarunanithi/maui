@@ -1,11 +1,8 @@
 #nullable disable
 using System;
-using System.Diagnostics;
-using System.Diagnostics.Contracts;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Windows.Media.PlayTo;
 using UWPPoint = Windows.Foundation.Point;
 using UWPSize = Windows.Foundation.Size;
 
@@ -91,9 +88,32 @@ namespace Microsoft.Maui.Controls.Platform
 			var point = new UWPPoint(scrollViewer.HorizontalOffset, scrollViewer.VerticalOffset);
 
 			if (!(list.ContainerFromItem(targetItem) is UIElement targetContainer))
+			{
+				// For grouped data, ContainerFromItem returns null. Adjust using current scroll position
+				// which is already at the Leading (Start) position after ScrollIntoView.
+				// Shift up by (ViewportHeight - approximate item height) to bring item to end.
+				point = AdjustToEnd(point, new UWPSize(scrollViewer.ViewportWidth, 0), scrollViewer);
+				await JumpToOffsetAsync(scrollViewer, point.X, point.Y);
 				return;
+			}
 
 			point = AdjustToEnd(point, targetContainer.DesiredSize, scrollViewer);
+			await JumpToOffsetAsync(scrollViewer, point.X, point.Y);
+		}
+
+		static async Task AdjustToCenterAsync(ListViewBase list, ScrollViewer scrollViewer, object targetItem)
+		{
+			var point = new UWPPoint(scrollViewer.HorizontalOffset, scrollViewer.VerticalOffset);
+
+			if (!(list.ContainerFromItem(targetItem) is UIElement targetContainer))
+			{
+				// For grouped data, ContainerFromItem returns null.
+				point = AdjustToCenter(point, new UWPSize(scrollViewer.ViewportWidth, 0), scrollViewer);
+				await JumpToOffsetAsync(scrollViewer, point.X, point.Y);
+				return;
+			}
+
+			point = AdjustToCenter(point, targetContainer.DesiredSize, scrollViewer);
 			await JumpToOffsetAsync(scrollViewer, point.X, point.Y);
 		}
 
@@ -117,17 +137,6 @@ namespace Microsoft.Maui.Controls.Platform
 		{
 			var adjustment = (scrollViewer.ViewportHeight / 2) - (itemSize.Height / 2);
 			return new UWPPoint(point.X, point.Y - adjustment);
-		}
-
-		static async Task AdjustToCenterAsync(ListViewBase list, ScrollViewer scrollViewer, object targetItem)
-		{
-			var point = new UWPPoint(scrollViewer.HorizontalOffset, scrollViewer.VerticalOffset);
-
-			if (!(list.ContainerFromItem(targetItem) is UIElement targetContainer))
-				return;
-
-			point = AdjustToCenter(point, targetContainer.DesiredSize, scrollViewer);
-			await JumpToOffsetAsync(scrollViewer, point.X, point.Y);
 		}
 
 		static async Task JumpToOffsetAsync(ScrollViewer scrollViewer, double targetHorizontalOffset, double targetVerticalOffset)
@@ -158,7 +167,7 @@ namespace Microsoft.Maui.Controls.Platform
 			}
 		}
 
-		static async Task<UWPPoint> GetApproximateTargetAsync(ListViewBase list, ScrollViewer scrollViewer, object targetItem)
+		static async Task<UWPPoint> GetApproximateTargetAsync(ListViewBase list, ScrollViewer scrollViewer, object targetItem, ScrollToPosition scrollToPosition)
 		{
 			if (scrollViewer == null)
 				return new UWPPoint(0, 0);
@@ -177,11 +186,29 @@ namespace Microsoft.Maui.Controls.Platform
 
 			var transform = targetContainer.TransformToVisual(scrollViewer.Content as UIElement);
 
+			// Capture item size while the container is realized so we can apply position adjustments
+			var itemSize = targetContainer.DesiredSize;
+
 			// Return to the original position
 			await JumpToOffsetAsync(scrollViewer, horizontalOffset, verticalOffset);
 
-			// Return the transformed point
-			return transform.TransformPoint(Zero);
+			var point = transform.TransformPoint(Zero);
+
+			// Apply the correct position adjustment based on scrollToPosition.
+			// Without this, GetApproximateTargetAsync always returns the Start-aligned position.
+			// For grouped data, ContainerFromItem returns null during animation so ScrollToTargetContainerAsync
+			// (which normally corrects the position) is never reached. We must adjust here instead.
+			switch (scrollToPosition)
+			{
+				case ScrollToPosition.MakeVisible:
+					return AdjustToMakeVisible(point, itemSize, scrollViewer);
+				case ScrollToPosition.Center:
+					return AdjustToCenter(point, itemSize, scrollViewer);
+				case ScrollToPosition.End:
+					return AdjustToEnd(point, itemSize, scrollViewer);
+				default: // Start — no adjustment needed
+					return point;
+			}
 		}
 
 		internal static void JumpToIndexAsync(ListViewBase list, int index, ScrollToPosition scrollToPosition)
@@ -324,7 +351,7 @@ namespace Microsoft.Maui.Controls.Platform
 
 			// This is the unhappy path. Because of virtualization, the item has not actually been created yet.
 			// So we make our best guess about the location of the item
-			var targetPoint = await GetApproximateTargetAsync(list, scrollViewer, targetItem);
+			var targetPoint = await GetApproximateTargetAsync(list, scrollViewer, targetItem, scrollToPosition);
 
 			// And then we scroll toward that position. The interruptCheck parameter will be run as we're scrolling
 			// to see if the item exists yet; if it does, AnimateToOffsetAsync will be canceled and we'll finish

@@ -167,9 +167,11 @@ namespace Microsoft.Maui.Controls.Platform
 			// for our recycle check below
 			dataTemplate = dataTemplate.SelectDataTemplate(dataContext, container);
 
-			if (Content is null || _currentTemplate != dataTemplate)
+			bool isNewContent = Content is null || _currentTemplate != dataTemplate;
+
+			if (isNewContent)
 			{
-				// If the content has never been realized (i.e., this is a new instance), 
+				// If the content has never been realized (i.e., this is a new instance),
 				// or if we need to switch DataTemplates (because this instance is being recycled)
 				// then we'll need to create the content from the template 
 				var content = dataTemplate.CreateContent();
@@ -204,8 +206,13 @@ namespace Microsoft.Maui.Controls.Platform
 			{
 				Content = _handler.ToPlatform();
 			}
-			else
+			else if (isNewContent)
 			{
+				// Only create a new ContentLayoutPanel when the content was freshly created.
+				// When reusing (isNewContent == false), the existing ContentLayoutPanel already holds
+				// the correct WrapperView. Creating a new one would try to re-add a WrapperView that
+				// WinRT has internally disconnected from the old panel (Parent reports null but it's
+				// in a zombie state), causing COMException "No installed components were detected".
 				Content = new ContentLayoutPanel(_handler.VirtualView);
 			}
 
@@ -351,7 +358,13 @@ namespace Microsoft.Maui.Controls.Platform
 #pragma warning disable RS0030 // Do not use banned APIs; Panel.Children is banned for performance reasons. Here we cannot avoid accessing it.
 				// Just in case this view is already parented to a wrapper that's been cycled out
 				if (platformView.Parent is ContentLayoutPanel clp)
+				{
 					clp.Children.Remove(platformView);
+				}
+				else if (platformView.Parent is Panel panel)
+				{
+					panel.Children.Remove(platformView);
+				}
 
 				Children.Add(platformView);
 #pragma warning restore RS0030 // Do not use banned APIs
