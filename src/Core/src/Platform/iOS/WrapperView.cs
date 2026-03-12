@@ -216,7 +216,8 @@ namespace Microsoft.Maui.Platform
 				}
 				else
 				{
-					returnSize = SizeThatFits(originalSpec);
+					// Use widthConstraint (which applies WidthRequest) instead of originalSpec to avoid measuring at parent width.
+					returnSize = SizeThatFits(new CGSize((nfloat)widthConstraint, (nfloat)heightConstraint));
 				}
 			}
 

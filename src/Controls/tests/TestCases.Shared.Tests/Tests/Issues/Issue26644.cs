@@ -9,7 +9,7 @@ namespace Microsoft.Maui.TestCases.Tests.Issues
 	{
 		public Issue26644(TestDevice device) : base(device) { }
 
-		public override string Issue => "Label with WidthRequest is measured at parent width on iOS, causing text to be clipped";
+		public override string Issue => "[iOS] Label with a fixed WidthRequest has wrong height";
 
 		[Test]
 		[Category(UITestCategories.Label)]
