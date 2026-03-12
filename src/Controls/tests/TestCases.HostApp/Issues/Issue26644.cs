@@ -1,6 +1,6 @@
 namespace Maui.Controls.Sample.Issues;
 
-[Issue(IssueTracker.Github, 26644, "Label with WidthRequest is measured at parent width on iOS, causing text to be clipped", PlatformAffected.iOS | PlatformAffected.macOS)]
+[Issue(IssueTracker.Github, 26644, "[iOS] Label with a fixed WidthRequest has wrong height", PlatformAffected.iOS | PlatformAffected.macOS)]
 public class Issue26644 : ContentPage
 {
 	const string LongText =

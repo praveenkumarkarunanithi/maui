@@ -102,6 +102,12 @@ namespace Microsoft.Maui
 			}
 			else
 			{
+				// Apply explicit Width/Height constraints so SizeThatFits measures at WidthRequest, not parent width.
+				if (IsExplicitSet(virtualView.Width))
+					widthConstraint = Math.Min(virtualView.Width, widthConstraint);
+				if (IsExplicitSet(virtualView.Height))
+					heightConstraint = Math.Min(virtualView.Height, heightConstraint);
+
 				sizeThatFits = platformView.SizeThatFits(new CGSize((float)widthConstraint, (float)heightConstraint));
 			}
 
