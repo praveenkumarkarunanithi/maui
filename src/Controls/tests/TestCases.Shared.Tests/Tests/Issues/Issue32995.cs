@@ -20,5 +20,9 @@ public class Issue32995 : _IssuesUITest
 		App.Tap("EnableButton");
 		App.WaitForElement("Tab2");
 		VerifyScreenshot("EnabledTabWithNormalColor");
+
+		App.Tap("DisableButton");
+		App.WaitForElement("Tab2");
+		VerifyScreenshot("DisabledTabWithGreenColor");
 	}
 }

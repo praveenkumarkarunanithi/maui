@@ -49,6 +49,7 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 
 		readonly IShellContext _context;
 		readonly Dictionary<UIViewController, IShellSectionRenderer> _sectionRenderers = new Dictionary<UIViewController, IShellSectionRenderer>();
+		readonly Dictionary<UITabBarItem, UIImage> _originalTabImages = new();
 		IShellTabBarAppearanceTracker _appearanceTracker;
 		ShellSection _currentSection;
 		Page _displayedPage;
@@ -143,28 +144,6 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 			};
 		}
 
-		public override void ViewDidAppear(bool animated)
-		{
-			base.ViewDidAppear(animated);
-			ApplyInitialDisabledState();
-		}
-
-		void ApplyInitialDisabledState()
-		{
-			if (TabBar.Items is null)
-				return;
-
-			var items = ShellItemController?.GetItems();
-			if (items is null)
-				return;
-
-			for (int i = 0; i < items.Count && i < TabBar.Items.Length; i++)
-			{
-				if (!items[i].IsEnabled)
-					UpdateTabBarItemEnabled(TabBar.Items[i], false);
-			}
-		}
-
 		void UpdateTabBarItemEnabled(UITabBarItem tabBarItem, bool isEnabled)
 		{
 			tabBarItem.Enabled = isEnabled;
@@ -180,12 +159,25 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 			// Tint icon image since UITabBarAppearance.Disabled.IconColor doesn't work
 			if (tabBarItem.Image is not null)
 			{
-				tabBarItem.Image = isEnabled
-					? tabBarItem.Image.ImageWithRenderingMode(UIImageRenderingMode.AlwaysTemplate)
-					: CreateTintedImage(tabBarItem.Image, disabledColor).ImageWithRenderingMode(UIImageRenderingMode.AlwaysOriginal);
+				if (!isEnabled)
+				{
+					// Cache the original image before replacing with tinted version so we can
+					// restore it (including its original rendering mode) on re-enable.
+					_originalTabImages.TryAdd(tabBarItem, tabBarItem.Image);
+					tabBarItem.Image = CreateTintedImage(tabBarItem.Image, disabledColor)
+						.ImageWithRenderingMode(UIImageRenderingMode.AlwaysOriginal);
+				}
+				else if (_originalTabImages.TryGetValue(tabBarItem, out var originalImage))
+				{
+					// Restore the original image, preserving its original rendering mode.
+					tabBarItem.Image = originalImage;
+					_originalTabImages.Remove(tabBarItem);
+				}
 			}
 		}
 
+		// UIImage.WithTintColor() does not correctly colorize template-mode icons;
+		// UIGraphicsImageRenderer with CGBlendMode.SourceIn fills only the opaque pixels.
 		UIImage CreateTintedImage(UIImage image, UIColor color)
 		{
 			var renderer = new UIGraphicsImageRenderer(image.Size, new UIGraphicsImageRendererFormat { Opaque = false, Scale = image.CurrentScale });
@@ -366,7 +358,7 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 				return;
 			}
 
-			var items = ShellItemController.GetItems();
+			var items = ShellItemController?.GetItems();
 			if (items is null)
 			{
 				return;
@@ -376,7 +368,7 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 			{
 				for (int tabIndex = 0; tabIndex < items.Count; tabIndex++)
 				{
-					TabBar.Items[tabIndex].Enabled = items[tabIndex].IsEnabled;
+					UpdateTabBarItemEnabled(TabBar.Items[tabIndex], items[tabIndex].IsEnabled);
 				}
 			}
 		}
