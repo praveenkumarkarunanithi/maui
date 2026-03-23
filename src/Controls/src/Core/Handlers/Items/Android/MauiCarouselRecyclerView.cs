@@ -237,6 +237,10 @@ namespace Microsoft.Maui.Controls.Handlers.Items
 			_noNeedForScroll = true;
 			_gotoPosition = -1;
 
+			// Track the position where the current item actually moved to,
+			// so we can ensure PositionChanged fires with correct Previous/Current values
+			var intermediatePosition = currentItemPosition;
+
 			if (removingCurrentElement)
 			{
 				if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Reset)
@@ -254,6 +258,8 @@ namespace Microsoft.Maui.Controls.Handlers.Items
 					UpdateAdapter();
 					ScrollToPosition(carouselPosition);
 				}
+
+				intermediatePosition = -1;
 			}
 			//If we are adding a new item make sure to maintain the CurrentItemPosition
 			else if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add
@@ -287,6 +293,13 @@ namespace Microsoft.Maui.Controls.Handlers.Items
 			{
 				carouselPosition = 0;
 			}
+			else if (Carousel.ItemsUpdatingScrollMode == ItemsUpdatingScrollMode.KeepScrollOffset
+				&& e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add)
+			{
+				// Keep the original scroll offset position — the item at the current
+				// offset has changed, but the offset itself stays the same.
+				carouselPosition = Carousel.Position;
+			}
 
 			Carousel.
 				Handler.
@@ -300,6 +313,17 @@ namespace Microsoft.Maui.Controls.Handlers.Items
 							// callback was delivered then don't override it.
 							if (_scrollToCounter == savedScrollToCounter)
 							{
+								// When Position already equals the target (e.g. Position=0 and
+								// KeepItemsInView targets 0), UpdatePosition would be a no-op.
+								// Sync to the item's actual position first so UpdatePosition
+								// sees a real change and fires PositionChanged.
+								if (intermediatePosition >= 0
+									&& intermediatePosition != carouselPosition
+									&& Carousel.Position == carouselPosition)
+								{
+									Carousel.SetValueFromRenderer(CarouselView.PositionProperty, intermediatePosition);
+								}
+
 								SetCurrentItem(carouselPosition);
 								UpdatePosition(carouselPosition);
 								//If we are adding or removing the last item we need to update
