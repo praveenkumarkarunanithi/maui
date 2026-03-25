@@ -250,6 +250,38 @@ namespace Microsoft.Maui.Platform
 				}
 			}
 
+			// When the current page explicitly sets SafeAreaEdges.Top to None,
+			// re-check using children only. AppBarLayout's MeasuredHeight can be inflated
+			// by status bar padding from a previous inset pass, giving false positives
+			// when the nav bar is hidden. (#34472)
+			if (appBarHasContent && appBarLayout is not null)
+			{
+				var window = v.Context?.GetWindow();
+				var pageContent = window?.Content;
+				ISafeAreaElement? currentPage = null;
+
+				if (pageContent?.Handler is Handlers.NavigationViewHandler navHandler)
+				{
+					try { currentPage = navHandler.StackNavigationManager.CurrentPage as ISafeAreaElement; }
+					catch (InvalidOperationException) { }
+				}
+				currentPage ??= pageContent as ISafeAreaElement;
+
+				if (currentPage is not null && currentPage.HasExplicitSafeAreaEdges
+					&& currentPage.SafeAreaEdges.Top == SafeAreaRegions.None)
+				{
+					appBarHasContent = false;
+					for (int i = 0; i < appBarLayout.ChildCount; i++)
+					{
+						if (appBarLayout.GetChildAt(i)?.MeasuredHeight > 0)
+						{
+							appBarHasContent = true;
+							break;
+						}
+					}
+				}
+			}
+
 			// Apply padding to AppBarLayout based on content and system insets
 			if (appBarLayout is not null)
 			{

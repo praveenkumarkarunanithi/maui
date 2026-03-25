@@ -207,6 +207,9 @@ namespace Microsoft.Maui.Controls
 			return SafeAreaEdges.None;
 		}
 
+		bool ISafeAreaElement.HasExplicitSafeAreaEdges =>
+			GetValues<SafeAreaEdges>(new[] { SafeAreaEdgesProperty })[0].IsSet;
+
 		private protected override string GetDebuggerDisplay()
 		{
 			var contentText = DebuggerDisplayHelpers.GetDebugText(nameof(Content), Content);

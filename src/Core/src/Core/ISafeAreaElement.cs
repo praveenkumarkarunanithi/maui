@@ -10,5 +10,10 @@ namespace Microsoft.Maui
 		SafeAreaEdges SafeAreaEdges { get; }
 
 		SafeAreaEdges SafeAreaEdgesDefaultValueCreator();
+
+		/// <summary>
+		/// Whether the developer explicitly set SafeAreaEdges on this element.
+		/// </summary>
+		bool HasExplicitSafeAreaEdges => false;
 	}
 }
