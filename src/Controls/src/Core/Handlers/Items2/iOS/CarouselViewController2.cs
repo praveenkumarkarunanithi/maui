@@ -18,6 +18,7 @@ namespace Microsoft.Maui.Controls.Handlers.Items2
 		int _section = 0;
 		bool _wasDetachedFromWindow = false;
 		CarouselViewLoopManager _carouselViewLoopManager;
+		int _gotoPosition = -1;
 
 		// We need to keep track of the old views to update the visual states
 		// if this is null we are not attached to the window
@@ -229,7 +230,16 @@ namespace Microsoft.Maui.Controls.Handlers.Items2
 			if (ItemsView is CarouselView carousel)
 			{
 				carousel.IsScrolling = isScrolling;
+				if (!isScrolling && _gotoPosition != -1)
+				{
+					_gotoPosition = -1;
+				}
 			}
+		}
+
+		internal void SetGotoPosition(int position)
+		{
+			_gotoPosition = position;
 		}
 
 		internal NSIndexPath GetScrollToIndexPath(int position)
@@ -491,6 +501,16 @@ namespace Microsoft.Maui.Controls.Handlers.Items2
 			if (!InitialPositionSet || position == -1)
 			{
 				return;
+			}
+
+			if (_gotoPosition != -1 && position != _gotoPosition)
+			{
+				return;
+			}
+
+			if (position == _gotoPosition)
+			{
+				_gotoPosition = -1;
 			}
 
 			ItemsView.SetValueFromRenderer(CarouselView.PositionProperty, position);
