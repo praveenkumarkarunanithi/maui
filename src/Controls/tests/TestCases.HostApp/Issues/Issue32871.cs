@@ -91,6 +91,8 @@ public partial class Issue32871 : ContentPage
 public partial class Issue32871
 {
 	SoftInput _previousSoftInputMode;
+	LayoutListener _layoutListener;
+	AView _layoutListenerView;
 
 	partial void SetupPlatform(Grid grid, Label paddingLabel)
 	{
@@ -103,16 +105,26 @@ public partial class Issue32871
 
 		grid.HandlerChanged += (s, e) =>
 		{
-			if (grid.Handler?.PlatformView is AView nativeView)
+			if (grid.Handler?.PlatformView is AView nativeView && _layoutListener is null)
 			{
 				paddingLabel.Text = $"NativePadding: B={nativeView.PaddingBottom}";
-				nativeView.AddOnLayoutChangeListener(new LayoutListener(nativeView, paddingLabel));
+				_layoutListener = new LayoutListener(nativeView, paddingLabel);
+				_layoutListenerView = nativeView;
+				nativeView.AddOnLayoutChangeListener(_layoutListener);
 			}
 		};
 	}
 
 	partial void CleanupPlatform()
 	{
+		if (_layoutListenerView is not null && _layoutListener is not null)
+		{
+			_layoutListenerView.RemoveOnLayoutChangeListener(_layoutListener);
+			_layoutListener.Dispose();
+			_layoutListener = null;
+			_layoutListenerView = null;
+		}
+
 		var window = Microsoft.Maui.ApplicationModel.Platform.CurrentActivity?.Window;
 		window?.SetSoftInputMode(_previousSoftInputMode);
 	}

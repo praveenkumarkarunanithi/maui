@@ -22,8 +22,10 @@ public class Issue32871 : _IssuesUITest
 
 		var initialPaddingText = App.FindElement("PaddingLabel").GetText() ?? "";
 		var initialBottomPadding = ExtractBottomPadding(initialPaddingText);
+		Assert.That(initialBottomPadding, Is.GreaterThanOrEqualTo(0),
+			$"Could not parse bottom padding from '{initialPaddingText}'.");
 
-		if (initialBottomPadding <= 0)
+		if (initialBottomPadding == 0)
 		{
 			Assert.Ignore("Device has no navigation bar bottom inset — cannot validate this regression.");
 			return;
@@ -31,15 +33,22 @@ public class Issue32871 : _IssuesUITest
 
 		App.Tap("TestEntry");
 
-		Assert.That(App.WaitForKeyboardToShow(), Is.True,
-			"Keyboard must be visible to validate the fix.");
+		try
+		{
+			Assert.That(App.WaitForKeyboardToShow(), Is.True,
+				"Keyboard must be visible to validate the fix.");
 
-		var paddingWhileKeyboard = App.FindElement("PaddingLabel").GetText() ?? "";
-		var bottomPaddingDuringKeyboard = ExtractBottomPadding(paddingWhileKeyboard);
+			var paddingWhileKeyboard = App.FindElement("PaddingLabel").GetText() ?? "";
+			var bottomPaddingDuringKeyboard = ExtractBottomPadding(paddingWhileKeyboard);
 
-		Assert.That(bottomPaddingDuringKeyboard, Is.EqualTo(initialBottomPadding),
-			$"Bottom padding should be preserved while keyboard is showing. " +
-			$"Initial: {initialBottomPadding}px, During keyboard: {bottomPaddingDuringKeyboard}px.");
+			Assert.That(bottomPaddingDuringKeyboard, Is.EqualTo(initialBottomPadding),
+				$"Bottom padding should be preserved while keyboard is showing. " +
+				$"Initial: {initialBottomPadding}px, During keyboard: {bottomPaddingDuringKeyboard}px.");
+		}
+		finally
+		{
+			App.DismissKeyboard();
+		}
 	}
 
 	static double ExtractBottomPadding(string paddingText)
