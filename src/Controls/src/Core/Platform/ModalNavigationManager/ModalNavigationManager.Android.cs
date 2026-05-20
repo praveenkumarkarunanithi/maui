@@ -261,14 +261,18 @@ namespace Microsoft.Maui.Controls.Platform
 					dialog.Window.SetSoftInputMode(attributes.SoftInputMode);
 				}
 
-				// Configure translucent system bars for modal pages on Android API 30+
+				// On API 30+ configure translucent system bars; on API 30-34 also emulate the
+				// API 35+ edge-to-edge dialog default so the activity's TabBar doesn't bleed
+				// through the modal.
 				if (OperatingSystem.IsAndroidVersionAtLeast(30) && Context?.GetActivity() is global::Android.App.Activity activity)
 				{
 					dialog.Window.ConfigureTranslucentSystemBars(activity);
+					dialog.Window.EnableLegacyDialogEdgeToEdge();
 				}
 				else if (mainActivityWindow is not null)
 				{
-					// Fallback for API < 30: Apply legacy translucent behavior
+					// API < 30: inherit the activity's bar colors so the modal looks identical
+					// to the host activity (edge-to-edge dialog APIs aren't available here).
 					var navigationBarColor = mainActivityWindow.NavigationBarColor;
 					var statusBarColor = mainActivityWindow.StatusBarColor;
 #pragma warning disable CA1422

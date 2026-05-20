@@ -1,10 +1,12 @@
-﻿using Android.App;
+﻿using System;
+using Android.App;
 using Android.Content;
 using Android.Content.Res;
 using Android.Views;
 using AndroidX.Core.View;
 using Microsoft.Maui.Devices;
 using Microsoft.Maui.Platform;
+using AColor = Android.Graphics.Color;
 
 namespace Microsoft.Maui
 {
@@ -62,6 +64,24 @@ namespace Microsoft.Maui
 				windowInsetsController.AppearanceLightStatusBars = isLightTheme;
 				windowInsetsController.AppearanceLightNavigationBars = isLightTheme;
 			}
+		}
+
+		// API 30-34 dialog windows aren't edge-to-edge by default (API 35+ are), so the host
+		// activity's system-bar chrome leaks through modals. Emulate the API 35+ default to
+		// keep modal presentation consistent across Android versions.
+		internal static void EnableLegacyDialogEdgeToEdge(this Window window)
+		{
+			if (!OperatingSystem.IsAndroidVersionAtLeast(30) ||
+				OperatingSystem.IsAndroidVersionAtLeast(35))
+			{
+				return;
+			}
+
+			WindowCompat.SetDecorFitsSystemWindows(window, false);
+			window.SetStatusBarColor(AColor.Transparent);
+			window.SetNavigationBarColor(AColor.Transparent);
+			window.StatusBarContrastEnforced = false;
+			window.NavigationBarContrastEnforced = false;
 		}
 	}
 }
