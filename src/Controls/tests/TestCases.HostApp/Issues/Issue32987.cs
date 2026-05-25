@@ -14,8 +14,6 @@ public class Issue32987 : ContentPage
 
 	public Issue32987()
 	{
-		// Bright background makes the OS contrast scrim visible: without the fix a darker
-		// band is drawn over this color in the status / navigation bar areas.
 		BackgroundColor = Colors.Orange;
 		Content = new VerticalStackLayout
 		{
@@ -51,8 +49,12 @@ public class Issue32987 : ContentPage
 			window.SetStatusBarColor(AColor.Transparent);
 			_activityNavBarColor.Text = $"ActivityNavBar=0x{window.NavigationBarColor:X8}";
 			_activityStatusBarColor.Text = $"ActivityStatusBar=0x{window.StatusBarColor:X8}";
-			_activityNavBarContrast.Text = $"ActivityNavBarContrast={window.NavigationBarContrastEnforced}";
-			_activityStatusBarContrast.Text = $"ActivityStatusBarContrast={window.StatusBarContrastEnforced}";
+
+			if (OperatingSystem.IsAndroidVersionAtLeast(29))
+			{
+				_activityNavBarContrast.Text = $"ActivityNavBarContrast={window.NavigationBarContrastEnforced}";
+				_activityStatusBarContrast.Text = $"ActivityStatusBarContrast={window.StatusBarContrastEnforced}";
+			}
 		}
 	}
 }

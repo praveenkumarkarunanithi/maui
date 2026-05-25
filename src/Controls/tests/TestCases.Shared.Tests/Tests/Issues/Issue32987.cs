@@ -11,9 +11,6 @@ public class Issue32987 : _IssuesUITest
 
 	public override string Issue => "TabBar behavior inconsistent with API 36 and API 34 devices";
 
-	// Verifies the fix in MauiAppCompatActivity that clears the OS contrast scrim
-	// so a transparent navigationBarColor doesn't get a translucent overlay drawn
-	// over the 3-button nav area.
 	[Test]
 	[Category(UITestCategories.Navigation)]
 	public void ActivityWindowDisablesSystemBarContrastScrim()
