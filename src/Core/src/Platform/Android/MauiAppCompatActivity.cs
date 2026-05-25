@@ -35,6 +35,16 @@ namespace Microsoft.Maui
 				this.CreatePlatformWindow(IPlatformApplication.Current.Application, savedInstanceState);
 			}
 
+			// Must run AFTER CreatePlatformWindow: SetContentView -> PhoneWindow.generateLayout
+			// re-reads the theme's enforceNavigationBarContrast (defaults to true), which would
+			// otherwise overwrite an earlier setter call and let the OS draw a translucent
+			// contrast scrim over the 3-button nav bar (blocking TabBar from extending under).
+			if (OperatingSystem.IsAndroidVersionAtLeast(29) && Window is not null)
+			{
+				Window.NavigationBarContrastEnforced = false;
+				Window.StatusBarContrastEnforced = false;
+			}
+
 			// Register predictive back callback (Android 13+/API 33+) if available.
 			// This integrates MAUI lifecycle OnBackPressed events with the system back gesture animation.
 			// Guidance: route custom back handling through AndroidX OnBackPressedDispatcher so
