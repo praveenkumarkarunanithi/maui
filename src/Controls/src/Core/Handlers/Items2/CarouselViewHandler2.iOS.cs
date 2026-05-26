@@ -52,6 +52,11 @@ namespace Microsoft.Maui.Controls.Handlers.Items2
 				return;
 			}
 
+			if (args.IsAnimated && args.Mode == ScrollToMode.Position)
+			{
+				carouselViewController2.SetGotoPosition(args.Index);
+			}
+
 			if (VirtualView?.Loop == true)
 			{
 				var goToIndexPath = carouselViewController2.GetScrollToIndexPath(args.Index);
