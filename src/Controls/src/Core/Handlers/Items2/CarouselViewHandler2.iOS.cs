@@ -52,7 +52,7 @@ namespace Microsoft.Maui.Controls.Handlers.Items2
 				return;
 			}
 
-			if (args.IsAnimated && args.Mode == ScrollToMode.Position)
+			if (args.IsAnimated && args.Mode == ScrollToMode.Position && args.Index >= 0 && args.Index < carouselViewController2.ItemsSource?.ItemCount)
 			{
 				carouselViewController2.SetGotoPosition(args.Index);
 			}
