@@ -4,5 +4,6 @@ namespace Microsoft.Maui
 {
 	internal interface IMauiRecyclerView
 	{
+		bool IsShowingEmptyView { get; }
 	}
 }
