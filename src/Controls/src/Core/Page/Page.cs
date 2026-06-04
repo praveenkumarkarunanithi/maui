@@ -855,10 +855,12 @@ namespace Microsoft.Maui.Controls
 			// can leave it true, which would incorrectly block the pop-return (fixes #35756).
 			// PopToRoot is excluded: SendNavigatedFrom already resets all flags before PopToRoot cascades.
 			var containerChild = (this as IPageContainer<Page>)?.CurrentPage;
-			if (containerChild != null)
+			if (containerChild is not null)
 			{
 				if (args.NavigationType == NavigationType.Pop)
+				{
 					containerChild.HasNavigatedTo = false;
+				}
 
 				containerChild.SendNavigatedTo(args);
 			}
