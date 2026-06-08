@@ -13,6 +13,11 @@ namespace Microsoft.Maui.Platform
 		readonly WebViewHandler _handler;
 		readonly Rect _clipRect;
 
+		// Tracks whether about:blank was loaded synthetically for layout (null source).
+		// MauiWebViewClient clears this entry from the native back stack once the real URL loads,
+		// preventing CanGoBack() returning true unexpectedly. Fixes #35788.
+		internal bool IsLoadingForLayout { get; set; }
+
 		public MauiWebView(WebViewHandler handler, Context context) : base(context)
 		{
 			_handler = handler ?? throw new ArgumentNullException(nameof(handler));
