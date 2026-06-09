@@ -18,9 +18,9 @@ namespace Microsoft.Maui.Platform
 		private static readonly AUri AndroidAppOriginUri = AUri.Parse(HybridWebViewHandler.AppOrigin)!;
 		readonly Rect _clipRect;
 
-		// True after the first layout pass where one dimension is positive and the other is zero.
-		// Once set, ClipBounds stays null for this instance's lifetime — a zero-area ClipBounds
-		// in this state causes RenderThread to crash on an incomplete Skia canvas (SIGSEGV).
+		// True after the first layout pass where exactly one dimension is positive and the other is zero.
+		// Auto-sizing layouts produce this intermediate state; a zero-area ClipBounds here
+		// causes RenderThread to crash on an incomplete Skia canvas (SIGSEGV).
 		// https://github.com/dotnet/maui/issues/35771
 		bool _isAutoSizing;
 
@@ -52,10 +52,11 @@ namespace Microsoft.Maui.Platform
 
 		void UpdateClipBounds(int width, int height)
 		{
-			// Auto-sizing layouts (e.g. VerticalStackLayout with no HeightRequest) produce a first
-			// layout pass with a positive width but zero height, or vice-versa. A zero-area ClipBounds
-			// in this state causes RenderThread to crash (SIGSEGV). Null disables clipping; the latch
-			// prevents later layout passes from re-enabling it before both dimensions are stable.
+			// Auto-sizing layouts produce an intermediate layout pass where exactly one dimension
+			// is positive and the other is zero: vertical layouts give (w>0, h=0) first; horizontal
+			// layouts give (w=0, h>0) first. A zero-area ClipBounds in either state causes
+			// RenderThread to crash (SIGSEGV). Null disables clipping; the latch prevents later
+			// layout passes from re-enabling it before both dimensions are stable.
 			// https://github.com/dotnet/maui/issues/35771
 			if (_isAutoSizing || (width > 0 && height == 0) || (width == 0 && height > 0))
 			{
