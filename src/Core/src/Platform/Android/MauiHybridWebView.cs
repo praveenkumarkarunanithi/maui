@@ -18,11 +18,10 @@ namespace Microsoft.Maui.Platform
 		private static readonly AUri AndroidAppOriginUri = AUri.Parse(HybridWebViewHandler.AppOrigin)!;
 		readonly Rect _clipRect;
 
-		// True once this instance observes (w>0, h=0) — the layout signature of a WebView
-		// in an unconstrained-height container (e.g. ScrollView). ClipBounds is kept null
-		// for the rest of the instance lifetime to avoid SIGSEGV: any non-null value causes
-		// RenderThread to invoke the GL functor on off-screen views, which receive a zero-area
-		// Skia canvas and crash. https://github.com/dotnet/maui/issues/35771
+		// True after the first layout pass where one dimension is positive and the other is zero.
+		// Once set, ClipBounds stays null for this instance's lifetime — a zero-area ClipBounds
+		// in this state causes RenderThread to crash on an incomplete Skia canvas (SIGSEGV).
+		// https://github.com/dotnet/maui/issues/35771
 		bool _isAutoSizing;
 
 		public MauiHybridWebView(HybridWebViewHandler handler, Context context) : base(context)
@@ -53,12 +52,12 @@ namespace Microsoft.Maui.Platform
 
 		void UpdateClipBounds(int width, int height)
 		{
-			// (w>0, h=0) is the layout signature of a WebView inside an unconstrained-height
-			// container waiting for JS to measure content height. Keeping ClipBounds null
-			// prevents SIGSEGV: a non-null value causes RenderThread to invoke the GL functor
-			// on off-screen views with a zero-area Skia canvas.
+			// Auto-sizing layouts (e.g. VerticalStackLayout with no HeightRequest) produce a first
+			// layout pass with a positive width but zero height, or vice-versa. A zero-area ClipBounds
+			// in this state causes RenderThread to crash (SIGSEGV). Null disables clipping; the latch
+			// prevents later layout passes from re-enabling it before both dimensions are stable.
 			// https://github.com/dotnet/maui/issues/35771
-			if (_isAutoSizing || (width > 0 && height == 0))
+			if (_isAutoSizing || (width > 0 && height == 0) || (width == 0 && height > 0))
 			{
 				_isAutoSizing = true;
 				ClipBounds = null;
@@ -85,7 +84,7 @@ namespace Microsoft.Maui.Platform
 			}
 			else
 			{
-				// width=0: zero-width views are skipped by RenderThread, so (0,0,0,0) is safe.
+				// View has no area yet or is fully collapsed — keep a zero clip rect.
 				_clipRect.Set(0, 0, 0, 0);
 				ClipBounds = _clipRect;
 			}

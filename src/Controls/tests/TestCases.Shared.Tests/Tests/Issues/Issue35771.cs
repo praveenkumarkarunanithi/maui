@@ -19,6 +19,30 @@ public class Issue35771 : _IssuesUITest
 		App.WaitForElement("Issue35771NavigateButton");
 		App.Tap("Issue35771NavigateButton");
 		App.WaitForElement("Issue35771Ready");
+		App.Back();
+		App.WaitForElement("Issue35771NavigateButton");
+	}
+
+	[Test]
+	[Category(UITestCategories.WebView)]
+	public void HorizontalAutoSizingWebViewsShouldNotCrash()
+	{
+		App.WaitForElement("Issue35771HorizontalNavigateButton");
+		App.Tap("Issue35771HorizontalNavigateButton");
+		App.WaitForElement("Issue35771HorizontalReady");
+		App.Back();
+		App.WaitForElement("Issue35771NavigateButton");
+	}
+
+	[Test]
+	[Category(UITestCategories.WebView)]
+	public void PopAsyncFromAutoSizingWebViewPageShouldNotCrash()
+	{
+		App.WaitForElement("Issue35771PopAsyncNavigateButton");
+		App.Tap("Issue35771PopAsyncNavigateButton");
+		App.WaitForElement("Issue35771PopAsyncReady");
+		App.Tap("Issue35771PopAsyncPopButton");
+		App.WaitForElement("Issue35771NavigateButton");
 	}
 }
 #endif
