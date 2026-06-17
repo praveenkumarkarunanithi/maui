@@ -908,7 +908,7 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 			}
 
 			if (e.PropertyName == SearchHandler.ClearPlaceholderEnabledProperty.PropertyName)
-				_searchController.SearchBar.ShowsBookmarkButton = _searchHandler.ClearPlaceholderEnabled;
+				_searchController.SearchBar.ShowsBookmarkButton = _searchHandler!.ClearPlaceholderEnabled;
 			else if (e.PropertyName == SearchHandler.SearchBoxVisibilityProperty.PropertyName)
 				UpdateSearchVisibility(_searchController);
 			else if (e.PropertyName == SearchHandler.IsSearchEnabledProperty.PropertyName)
@@ -916,6 +916,18 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 			else if (e.Is(SearchHandler.AutomationIdProperty))
 			{
 				UpdateAutomationId();
+			}
+			else if (e.PropertyName == SearchHandler.ShowsResultsProperty.PropertyName)
+			{
+				if (_resultsRenderer != null)
+				{
+					_resultsRenderer.ItemSelected -= OnSearchItemSelected;
+					_resultsRenderer.Dispose();
+					_resultsRenderer = null;
+				}
+
+				DettachSearchController();
+				AttachSearchController();
 			}
 		}
 
@@ -1093,6 +1105,10 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 				searchBar.OnEditingStopped -= OnSearchBarEditingStopped;
 			}
 
+			// Clear updater BEFORE removing from nav to prevent iOS from firing the
+			// updater with empty text during removal, which would clear SearchHandler.Query
+			_searchController?.SetSearchResultsUpdater(_ => { });
+
 			if (NavigationItem is not null)
 			{
 				if (OperatingSystem.IsIOSVersionAtLeast(11))
@@ -1105,7 +1121,6 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 				}
 			}
 
-			_searchController?.SetSearchResultsUpdater(_ => { });
 			_searchController = null;
 		}
 

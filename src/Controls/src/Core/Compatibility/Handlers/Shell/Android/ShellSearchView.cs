@@ -79,6 +79,10 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 					_textBlock.ShowDropDown();
 				}
 			}
+			else
+			{
+				_textBlock.DismissDropDown();
+			}
 		}
 
 		void ITextWatcher.BeforeTextChanged(ICharSequence s, int start, int count, int after)
@@ -239,6 +243,13 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 			if (e.PropertyName == SearchHandler.IsSearchEnabledProperty.PropertyName)
 			{
 				_textBlock.Enabled = SearchHandler.IsSearchEnabled;
+			}
+			else if (e.PropertyName == SearchHandler.ShowsResultsProperty.PropertyName)
+			{
+				if (!SearchHandler.ShowsResults)
+					_textBlock.DismissDropDown();
+				else if (!string.IsNullOrEmpty(_textBlock.Text))
+					_textBlock.ShowDropDown();
 			}
 		}
 

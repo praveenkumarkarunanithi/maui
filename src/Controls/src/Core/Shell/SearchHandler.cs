@@ -435,7 +435,7 @@ namespace Microsoft.Maui.Controls
 
 		/// <summary>Bindable property for <see cref="ShowsResults"/>.</summary>
 		public static readonly BindableProperty ShowsResultsProperty =
-			BindableProperty.Create(nameof(ShowsResults), typeof(bool), typeof(SearchHandler), false, BindingMode.OneTime);
+			BindableProperty.Create(nameof(ShowsResults), typeof(bool), typeof(SearchHandler), false, BindingMode.OneWay);
 
 		private ListProxy _listProxy;
 
