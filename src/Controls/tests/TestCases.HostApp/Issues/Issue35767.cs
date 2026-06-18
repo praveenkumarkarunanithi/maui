@@ -1,6 +1,6 @@
 namespace Maui.Controls.Sample.Issues;
 
-[Issue(IssueTracker.Github, 35767, "SearchHandler.ShowsResults does not work dynamically", PlatformAffected.iOS | PlatformAffected.Android)]
+[Issue(IssueTracker.Github, 35767, "SearchHandler.ShowsResults does not work dynamically", PlatformAffected.All)]
 public class Issue35767 : Shell
 {
 	public Issue35767()

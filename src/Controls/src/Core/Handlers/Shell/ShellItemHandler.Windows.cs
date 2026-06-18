@@ -426,6 +426,9 @@ namespace Microsoft.Maui.Controls.Handlers
 			if (_currentSearchHandler == null)
 				return null;
 
+			if (!_currentSearchHandler.ShowsResults)
+				return null;
+
 			var itemsSource = _currentSearchHandler.ItemsSource;
 			var itemTemplate = _currentSearchHandler.ItemTemplate;
 
@@ -490,6 +493,13 @@ namespace Microsoft.Maui.Controls.Handlers
 					break;
 				case nameof(SearchHandler.ItemsSource):
 					autoSuggestBox.ItemsSource = CreateSearchHandlerItemsSource();
+					break;
+				case nameof(SearchHandler.ShowsResults):
+					autoSuggestBox.ItemsSource = CreateSearchHandlerItemsSource();
+					if (_currentSearchHandler.ShowsResults && !string.IsNullOrEmpty(autoSuggestBox.Text))
+						autoSuggestBox.IsSuggestionListOpen = true;
+					else
+						autoSuggestBox.IsSuggestionListOpen = false;
 					break;
 				case nameof(SearchHandler.TextColor):
 					autoSuggestBox.UpdateSearchHandlerTextColor(_currentSearchHandler);
