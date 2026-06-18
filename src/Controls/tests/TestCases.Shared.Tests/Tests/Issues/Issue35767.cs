@@ -63,9 +63,6 @@ public class Issue35767 : _IssuesUITest
 		App.Tap("Issue35767TrueButton");
 
 #if ANDROID
-		// On Android: open dropdown first (ShowsResults=true), then toggle false and type
-		// to trigger AfterTextChanged — without fix, else branch is missing so dropdown
-		// stays open and item remains selectable.
 		var searchHandler = App.GetShellSearchHandler();
 		searchHandler.Tap();
 		searchHandler.SendKeys(SearchQuery);
@@ -78,9 +75,6 @@ public class Issue35767 : _IssuesUITest
 		Assert.That(App.FindElement("Issue35767StatusLabel").GetText(), Is.EqualTo("None"),
 			"No item should be selectable after ShowsResults toggled back to false");
 #else
-		// On iOS: toggle false BEFORE activating search to avoid UISearchController overlay
-		// blocking the button. Without fix, _resultsRenderer from TrueButton persists and
-		// results still appear when search is activated.
 		App.Tap("Issue35767FalseButton");
 
 		var searchHandler = App.GetShellSearchHandler();
