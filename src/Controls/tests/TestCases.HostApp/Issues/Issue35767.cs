@@ -68,7 +68,7 @@ public class Issue35767 : Shell
 							_searchHandler.Query = string.Empty;
 							statusLabel.Text = "None";
 						})
-					}
+					},
 				}
 			};
 		}
