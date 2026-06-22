@@ -77,11 +77,27 @@ internal static class SafeAreaExtensions
 				bool isViewTracked = globalWindowInsetsListener?.IsViewTracked(view) == true;
 				if (!isViewTracked)
 				{
+					// If the view explicitly opted out of the top inset (e.g. ContentPage with
+					// SafeAreaEdges=None explicitly set), zero out the top so that NO child
+					// view applies status bar padding — true edge-to-edge behavior.
+					if (safeAreaView2.ShouldConsumeTopInsetForChildren())
+					{
+						var sysBarInsets = windowInsets.GetInsets(WindowInsetsCompat.Type.SystemBars());
+						var cutoutInsets = windowInsets.GetInsets(WindowInsetsCompat.Type.DisplayCutout());
+						if (sysBarInsets?.Top > 0 || cutoutInsets?.Top > 0)
+						{
+							var builder = new WindowInsetsCompat.Builder(windowInsets);
+							builder.SetInsets(WindowInsetsCompat.Type.SystemBars(),
+								AndroidX.Core.Graphics.Insets.Of(sysBarInsets?.Left ?? 0, 0, sysBarInsets?.Right ?? 0, sysBarInsets?.Bottom ?? 0));
+							builder.SetInsets(WindowInsetsCompat.Type.DisplayCutout(),
+								AndroidX.Core.Graphics.Insets.Of(cutoutInsets?.Left ?? 0, 0, cutoutInsets?.Right ?? 0, cutoutInsets?.Bottom ?? 0));
+							return builder.Build();
+						}
+					}
 					// Don't consume insets - pass them through for potential child views to handle
 					return windowInsets;
 				}
 			}
-
 
 			if (isKeyboardShowing &&
 				context.GetActivity()?.Window is Window window &&

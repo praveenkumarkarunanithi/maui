@@ -207,8 +207,15 @@ namespace Microsoft.Maui.Controls
 			return SafeAreaEdges.None;
 		}
 
-		bool ISafeAreaElement.HasExplicitSafeAreaEdges =>
-			GetValues<SafeAreaEdges>(new[] { SafeAreaEdgesProperty })[0].IsSet;
+		/// <inheritdoc cref="ISafeAreaView2.ShouldConsumeTopInsetForChildren"/>
+		bool ISafeAreaView2.ShouldConsumeTopInsetForChildren()
+		{
+			// Only consume the top inset for children when the developer EXPLICITLY set
+			// SafeAreaEdges=None for the top edge. This signals true edge-to-edge intent —
+			// content should flow behind the status bar and NO child should add top padding.
+			// We use IsSet to distinguish explicit None from the default None value.
+			return IsSet(SafeAreaEdgesProperty) && SafeAreaEdges.GetEdge(1) == SafeAreaRegions.None;
+		}
 
 		private protected override string GetDebuggerDisplay()
 		{

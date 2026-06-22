@@ -133,6 +133,21 @@ namespace Microsoft.Maui.Controls
 		// Which will cause the back button visibility to change.
 		void NavigationPageChildrenChanged(object s, ElementEventArgs a)
 		{
+			// When the navigation stack changes (push/pop), _currentPage may be stale
+			// (pointing to the previous page) because OnPageAppearing hasn't fired yet.
+			// Update _currentPage to the actual top of the stack now so ApplyChanges
+			// uses the correct page for IsVisible (HasNavigationBar) and other toolbar
+			// properties. Without this, a push of a HasNavigationBar=False page can
+			// briefly show the nav bar because _currentPage still points to the previous
+			// page (HasNavigationBar=True).
+			if (_currentNavigationPage != null)
+			{
+				var stack = _currentNavigationPage.Navigation?.NavigationStack;
+				if (stack?.Count > 0)
+				{
+					_currentPage = stack[stack.Count - 1];
+				}
+			}
 			ApplyChanges(_currentNavigationPage);
 		}
 
@@ -229,7 +244,11 @@ namespace Microsoft.Maui.Controls
 			if (stack.Count == 0)
 				return;
 
-			var currentPage = _currentPage;
+			// Always use the actual top of the navigation stack instead of the cached
+			// _currentPage, which can be stale (pointing to the previous page) when
+			// ApplyChanges fires during push/pop events before OnPageAppearing updates
+			// _currentPage.
+			var currentPage = stack[stack.Count - 1];
 
 			Page previousPage = null;
 			if (stack.Count > 1)

@@ -235,49 +235,21 @@ namespace Microsoft.Maui.Platform
 				}
 			}
 
-			// Check if AppBarLayout has meaningful content
-			bool appBarHasContent = appBarLayout?.MeasuredHeight > 0;
-			if (!appBarHasContent && appBarLayout is not null)
+				// Check if AppBarLayout has a visible toolbar-type child.
+			// When the nav bar is hidden (UpdateIsVisible), AppBarLayout.Visibility = Invisible → False ✅
+			// When there's no NavigationPage (direct Window.Page = ContentPage), AppBarLayout has no
+			// MaterialToolbar child at all → False ✅ (previously incorrectly True, causing content to be pushed down)
+			// When nav bar is visible with a toolbar → True ✅
+			bool appBarHasContent = false;
+			if (appBarLayout?.Visibility == ViewStates.Visible)
 			{
 				for (int i = 0; i < appBarLayout.ChildCount; i++)
 				{
 					var child = appBarLayout.GetChildAt(i);
-					if (child?.MeasuredHeight > 0)
+					if (child is MaterialToolbar && child.Visibility == ViewStates.Visible)
 					{
 						appBarHasContent = true;
 						break;
-					}
-				}
-			}
-
-			// When the current page explicitly sets SafeAreaEdges.Top to None,
-			// re-check using children only. AppBarLayout's MeasuredHeight can be inflated
-			// by status bar padding from a previous inset pass, giving false positives
-			// when the nav bar is hidden. (#34472)
-			if (appBarHasContent && appBarLayout is not null)
-			{
-				var window = v.Context?.GetWindow();
-				var pageContent = window?.Content;
-				ISafeAreaElement? currentPage = null;
-
-				if (pageContent?.Handler is Handlers.NavigationViewHandler navHandler)
-				{
-					try { currentPage = navHandler.StackNavigationManager.CurrentPage as ISafeAreaElement; }
-					catch (InvalidOperationException) { }
-				}
-				currentPage ??= pageContent as ISafeAreaElement;
-
-				if (currentPage is not null && currentPage.HasExplicitSafeAreaEdges
-					&& currentPage.SafeAreaEdges.Top == SafeAreaRegions.None)
-				{
-					appBarHasContent = false;
-					for (int i = 0; i < appBarLayout.ChildCount; i++)
-					{
-						if (appBarLayout.GetChildAt(i)?.MeasuredHeight > 0)
-						{
-							appBarHasContent = true;
-							break;
-						}
 					}
 				}
 			}

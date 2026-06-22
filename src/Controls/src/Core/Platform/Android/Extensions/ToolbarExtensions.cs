@@ -13,6 +13,7 @@ using AndroidX.AppCompat.Graphics.Drawable;
 using AndroidX.AppCompat.Widget;
 using AndroidX.Core.View;
 using AndroidX.Core.View.Accessibility;
+using Google.Android.Material.AppBar;
 using Microsoft.Maui.Graphics;
 using Microsoft.Maui.Primitives;
 using AGraphics = Android.Graphics;
@@ -41,9 +42,41 @@ namespace Microsoft.Maui.Controls.Platform
 			if (lp == null)
 				return;
 
+			// The toolbar lives inside an AppBarLayout inside a CoordinatorLayout.
+			// ScrollingViewBehavior offsets the content view based on AppBarLayout.getBottom(),
+			// so we must manage the AppBarLayout's height, padding, and visibility together
+			// with the toolbar to prevent stale padding from inflating MeasuredHeight.
+			var appBarLayout = nativeToolbar.Parent as AppBarLayout;
+
+			// Walk up parent chain in case toolbar is nested deeper than direct child of AppBarLayout
+			if (appBarLayout == null)
+			{
+				var parent = nativeToolbar.Parent;
+				while (parent != null)
+				{
+					if (parent is AppBarLayout abl) { appBarLayout = abl; break; }
+					parent = (parent as AView)?.Parent;
+				}
+			}
+
 			if (!showNavBar)
 			{
 				lp.Height = 0;
+				nativeToolbar.Visibility = ViewStates.Invisible;
+
+				if (appBarLayout != null)
+				{
+					// Clear padding so AppBarLayout.getBottom() returns 0 and
+					// ScrollingViewBehavior does not incorrectly offset the content view.
+					appBarLayout.SetPadding(0, 0, 0, 0);
+					var appBarLp = appBarLayout.LayoutParameters;
+					if (appBarLp != null)
+					{
+						appBarLp.Height = 0;
+						appBarLayout.LayoutParameters = appBarLp;
+					}
+					appBarLayout.Visibility = ViewStates.Invisible;
+				}
 			}
 			else
 			{
@@ -51,6 +84,19 @@ namespace Microsoft.Maui.Controls.Platform
 					lp.Height = (int)nativeToolbar.Context.ToPixels(toolbar.BarHeight.Value);
 				else
 					lp.Height = nativeToolbar.Context?.GetActionBarHeight() ?? 0;
+
+				nativeToolbar.Visibility = ViewStates.Visible;
+
+				if (appBarLayout != null)
+				{
+					var appBarLp = appBarLayout.LayoutParameters;
+					if (appBarLp != null)
+					{
+						appBarLp.Height = ViewGroup.LayoutParams.WrapContent;
+						appBarLayout.LayoutParameters = appBarLp;
+					}
+					appBarLayout.Visibility = ViewStates.Visible;
+				}
 			}
 
 			nativeToolbar.LayoutParameters = lp;

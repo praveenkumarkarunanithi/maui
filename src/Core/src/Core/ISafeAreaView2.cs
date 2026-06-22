@@ -19,5 +19,12 @@
 		/// <param name="edge">The edge to get the behavior for (0=Left, 1=Top, 2=Right, 3=Bottom).</param>
 		/// <returns>The SafeAreaRegions behavior for this edge.</returns>
 		SafeAreaRegions GetSafeAreaRegionsForEdge(int edge);
+
+		/// <summary>
+		/// Returns true when this view explicitly opts out of the top inset and wants to
+		/// prevent children from applying it as padding (true edge-to-edge).
+		/// Default is false (pass the inset through to children unchanged).
+		/// </summary>
+		bool ShouldConsumeTopInsetForChildren() => false;
 	}
 }
