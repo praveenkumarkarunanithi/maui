@@ -1,5 +1,101 @@
 ﻿<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Maui.Controls.Sample.MainPage"
-             xmlns:local="clr-namespace:Maui.Controls.Sample">
+             xmlns:local="clr-namespace:Maui.Controls.Sample"
+             Title="WebView Sizing Demo - Chatbot UI">
+
+    <Grid RowDefinitions="Auto,*,Auto" ColumnDefinitions="*">
+        
+        <!-- Header -->
+        <StackLayout 
+            Grid.Row="0"
+            Padding="16,12"
+            BackgroundColor="#1976D2"
+            Spacing="4">
+            <Label 
+                Text="WebView Sizing Issue Demo"
+                TextColor="White"
+                FontSize="18"
+                FontAttributes="Bold" />
+            <Label 
+                Text="Chat interface with HTML content rendering"
+                TextColor="#E0E0E0"
+                FontSize="12" />
+        </StackLayout>
+
+        <!-- Chat Messages CollectionView -->
+        <CollectionView 
+            Grid.Row="1"
+            ItemsSource="{Binding Messages}"
+            SelectionMode="None">
+            
+            <CollectionView.ItemsLayout>
+                <GridItemsLayout 
+                    Orientation="Vertical" 
+                    Span="1"
+                    HorizontalItemSpacing="0"
+                    VerticalItemSpacing="12" />
+            </CollectionView.ItemsLayout>
+            
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <!-- Message Bubble Container -->
+                    <Grid 
+                        Padding="12,0"
+                        HorizontalOptions="Fill">
+                        
+                        <!-- User Message (Right-aligned) -->
+                        <Grid ColumnDefinitions=".1*,*"
+                            x:Name="UserBubble"
+                            Style="{StaticResource UserBubbleFrame}"
+                            IsVisible="{Binding IsUser}">
+
+                            <WebView Grid.Column="1"
+                                x:Name="UserWebView"
+                                VerticalOptions="Fill"
+                                HorizontalOptions="End">
+                                <WebView.Source>
+                                    <HtmlWebViewSource Html="{Binding HtmlContent}"/>
+                                </WebView.Source>
+                            </WebView>
+                        </Grid>
+
+                        <!-- Bot Message (Left-aligned) -->
+                        <Grid ColumnDefinitions="*,.1*"
+                            x:Name="BotBubble"
+                            Style="{StaticResource BotBubbleFrame}"
+                            IsVisible="{Binding IsUser, Converter={StaticResource InvertedBoolConverter}}">
+
+                            <WebView 
+                                x:Name="BotWebView"
+                                VerticalOptions="Fill"
+                                HorizontalOptions="Start">
+                                <WebView.Source>
+                                    <HtmlWebViewSource Html="{Binding HtmlContent}"/>
+                                </WebView.Source>
+                            
+                            </WebView>
+                        </Grid>
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <!-- Footer with Info -->
+        <StackLayout 
+            Grid.Row="2"
+            Padding="16"
+            BackgroundColor="#F5F5F5"
+            Spacing="8">
+            <Label 
+                Text="⚠️ WebView Sizing Behavior:"
+                FontAttributes="Bold"
+                FontSize="12" />
+            <Label 
+                Text="• WebView may not calculate correct height from HTML content&#10;• Content may appear clipped or have extra space&#10;• This is independent of CollectionView - the layout container"
+                FontSize="11"
+                LineBreakMode="WordWrap" />
+        </StackLayout>
+    </Grid>
+
 </ContentPage>
