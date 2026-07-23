@@ -15,6 +15,12 @@ namespace Microsoft.Maui.Handlers
 	{
 		readonly HashSet<string> _loadedCookies = new HashSet<string>();
 
+		// Async DOM-measurement state (#36064). All fields reset in MapSource.
+		double _measuredContentHeight = -1;      // last committed content height (-1 = unknown)
+		int _probeGeneration;                    // token to discard stale probe callbacks after cell recycle
+		double _lastProbeFrameWidth = -1;        // frame width the last successful probe committed at
+		bool _hasNavigated;                      // guards PlatformArrange from probing before any DOM exists
+
 		protected virtual float MinimumSize => 44f;
 
 		WKUIDelegate? _delegate;
@@ -38,6 +44,16 @@ namespace Microsoft.Maui.Handlers
 
 		public static void MapSource(IWebViewHandler handler, IWebView webView)
 		{
+			// Reset async-measurement state and bump the generation token so any inflight
+			// probe callback from the previous source is discarded (#36064).
+			if (handler is WebViewHandler wvh)
+			{
+				wvh._measuredContentHeight = -1;
+				wvh._lastProbeFrameWidth = -1;
+				wvh._hasNavigated = false;
+				wvh._probeGeneration++;
+			}
+
 			IWebViewDelegate? webViewDelegate = handler.PlatformView as IWebViewDelegate;
 
 			handler.PlatformView?.UpdateSource(webView, webViewDelegate);
@@ -111,43 +127,141 @@ namespace Microsoft.Maui.Handlers
 			handler.PlatformView?.Eval(webView, script);
 		}
 
+		// Problem 1: fall back to constraint (clamped by Maximum*) when base returns 0/NaN.
+		// Problem 2: prefer DOM-measured content height over WKWebView's frame-echo when
+		// the height axis is unbounded (#36064).
 		public override Size GetDesiredSize(double widthConstraint, double heightConstraint)
 		{
 			var size = base.GetDesiredSize(widthConstraint, heightConstraint);
-
-			var set = false;
-
 			var width = size.Width;
 			var height = size.Height;
 
-			if (width == 0)
+			bool hasUsableWidthConstraint = widthConstraint > 0 && !double.IsInfinity(widthConstraint);
+			bool hasUsableHeightConstraint = heightConstraint > 0 && !double.IsInfinity(heightConstraint);
+
+			var maxW = VirtualView?.MaximumWidth ?? double.PositiveInfinity;
+			var maxH = VirtualView?.MaximumHeight ?? double.PositiveInfinity;
+
+			// WKWebView.SizeThatFits echoes the current (possibly stale) frame width after
+			// cell recycle; prefer the parent's constraint so the probe wraps at the real width.
+			if (hasUsableWidthConstraint)
+				width = ClampToMaximum(widthConstraint, maxW);
+			else if (width <= 0 || double.IsNaN(width))
+				width = MinimumSize;
+
+			if (height <= 0 || double.IsNaN(height))
+				height = ClampToMaximum(hasUsableHeightConstraint ? heightConstraint : (_measuredContentHeight > 0 ? _measuredContentHeight : MinimumSize), maxH);
+			else if (!hasUsableHeightConstraint && _measuredContentHeight > 0)
+				height = ClampToMaximum(_measuredContentHeight, maxH);
+
+			return new Size(width, height);
+		}
+
+		// Re-probe when the frame width has changed since the last successful probe, or
+		// we have no committed measurement yet (Navigated-triggered probe often ran before
+		// the WKWebView was arranged). #36064
+		public override void PlatformArrange(Graphics.Rect rect)
+		{
+			base.PlatformArrange(rect);
+
+			if (PlatformView is not null && _hasNavigated && PlatformView.Frame.Width > 0 &&
+				(_lastProbeFrameWidth < 0 || Math.Abs(PlatformView.Frame.Width - _lastProbeFrameWidth) > 0.5))
 			{
-				if (widthConstraint <= 0 || double.IsInfinity(widthConstraint))
-				{
-					width = MinimumSize;
-					set = true;
-				}
+				ProbeContentHeight(PlatformView);
 			}
+		}
 
-			if (height == 0)
+		static double ClampToMaximum(double value, double maximum)
+		{
+			if (double.IsNaN(maximum) || double.IsPositiveInfinity(maximum) || maximum <= 0)
+				return value;
+			return Math.Min(value, maximum);
+		}
+
+		// DOM probe for true content height (#36064). Sums direct children's
+		// getBoundingClientRect().bottom + computed margin-bottom (border-box excludes CSS
+		// margins) plus body padding-bottom. Avoids scrollHeight/offsetHeight which echo
+		// the WKWebView frame after render. Generation token discards stale callbacks after
+		// cell recycle; results captured before arrangement (frame height 0) are rejected
+		// so PlatformArrange can re-fire at the real width.
+		internal void ProbeContentHeight(WKWebView webView)
+		{
+			if (webView is null || VirtualView is null)
+				return;
+
+			int gen = ++_probeGeneration;
+			double probeFrameW = webView.Frame.Width;
+			double probeFrameH = webView.Frame.Height;
+
+			const string js =
+				"(function(){" +
+				"var b=document.body;if(!b)return -1;" +
+				"var k=b.children,m=0;" +
+				"for(var i=0;i<k.length;i++){" +
+				"var r=k[i].getBoundingClientRect();" +
+				"var mb=parseFloat(getComputedStyle(k[i]).marginBottom)||0;" +
+				"var bt=r.bottom+mb;if(bt>m)m=bt;}" +
+				"var p=parseFloat(getComputedStyle(b).paddingBottom)||0;" +
+				"return k.length>0?Math.ceil(m+p):-1;" +
+				"})()";
+
+			webView.EvaluateJavaScript(js, (result, error) =>
 			{
-				if (heightConstraint <= 0 || double.IsInfinity(heightConstraint))
+				// Discard callbacks superseded by MapSource or a later probe.
+				if (gen != _probeGeneration)
+					return;
+
+				double previous = _measuredContentHeight;
+
+				if (error is not null || result is null)
 				{
-					height = MinimumSize;
-					set = true;
+					_measuredContentHeight = -1;
+					_lastProbeFrameWidth = -1;
 				}
-			}
+				else
+				{
+					var raw = result.ToString();
+					double parsed = -1;
+					if (double.TryParse(raw, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var h) && h > 0)
+						parsed = h;
 
-			if (set)
-				size = new Size(width, height);
+					// Reject probes captured before WKWebView was arranged: JS wrapped text
+					// at a stale/zero width, producing an inflated height. PlatformArrange
+					// will re-fire once the real frame is set.
+					if (parsed > 0 && probeFrameH <= 0)
+					{
+						_measuredContentHeight = -1;
+						_lastProbeFrameWidth = -1;
+					}
+					else if (parsed > 0)
+					{
+						_measuredContentHeight = parsed;
+						_lastProbeFrameWidth = probeFrameW;
+					}
+					else
+					{
+						_measuredContentHeight = -1;
+						_lastProbeFrameWidth = -1;
+					}
+				}
 
-			return size;
+				if (Math.Abs(previous - _measuredContentHeight) > 0.5)
+				{
+					try { VirtualView?.InvalidateMeasure(); }
+					catch { }
+				}
+			});
 		}
 
 		internal async Task ProcessNavigatedAsync(string url)
 		{
 			if (VirtualView == null)
 				return;
+
+			// Async DOM probe so GetDesiredSize can size to content when height is unbounded (#36064).
+			_hasNavigated = true;
+			if (PlatformView is not null)
+				ProbeContentHeight(PlatformView);
 
 			try
 			{
