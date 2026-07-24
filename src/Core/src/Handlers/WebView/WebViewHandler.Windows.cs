@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using Microsoft.Maui.Graphics;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Web.WebView2.Core;
@@ -15,6 +16,10 @@ namespace Microsoft.Maui.Handlers
 		WebNavigationEvent _eventState;
 		readonly WebView2Proxy _proxy = new();
 		readonly HashSet<string> _loadedCookies = new();
+
+		// Fallback size (in device-independent pixels) when no usable constraint is available.
+		// Mirrors WebViewHandler.iOS.cs's MinimumSize.
+		const double MinimumSize = 44d;
 
 		protected override WebView2 CreatePlatformView() => new MauiWebView(this);
 
@@ -330,6 +335,47 @@ namespace Microsoft.Maui.Handlers
 		{
 			// Explicitly do nothing here to override the base ViewHandler.MapFlowDirection behavior
 			// This prevents the WebView2.FlowDirection from being set, avoiding content mirroring
+		}
+
+		// WebView2's native MeasureOverride always reports DesiredSize as (0,0), regardless of
+		// constraint or navigation state (https://github.com/dotnet/maui/issues/36064), so a
+		// WebView with HorizontalOptions Start/End collapses to an invisible 0-width control.
+		// Android avoids this by measuring with MeasureSpec.EXACTLY; mirror that here by falling
+		// back to the given constraint when the native measure is 0.
+		public override Size GetDesiredSize(double widthConstraint, double heightConstraint)
+		{
+			var size = base.GetDesiredSize(widthConstraint, heightConstraint);
+
+			var width = size.Width;
+			var height = size.Height;
+
+			// >= 0 (not > 0) so an explicit HeightRequest="0"/WidthRequest="0" collapse is honored
+			// instead of being bumped up to MinimumSize.
+			bool hasUsableWidthConstraint = double.IsFinite(widthConstraint) && widthConstraint >= 0;
+			bool hasUsableHeightConstraint = double.IsFinite(heightConstraint) && heightConstraint >= 0;
+
+			var maxWidth = VirtualView?.MaximumWidth ?? double.PositiveInfinity;
+			var maxHeight = VirtualView?.MaximumHeight ?? double.PositiveInfinity;
+
+			if (width == 0)
+			{
+				width = ClampToMaximum(hasUsableWidthConstraint ? widthConstraint : MinimumSize, maxWidth);
+			}
+
+			if (height == 0)
+			{
+				height = ClampToMaximum(hasUsableHeightConstraint ? heightConstraint : MinimumSize, maxHeight);
+			}
+
+			return new Size(width, height);
+		}
+
+		// Mirrors WebViewHandler.iOS.cs's ClampToMaximum.
+		static double ClampToMaximum(double value, double maximum)
+		{
+			if (double.IsNaN(maximum) || double.IsPositiveInfinity(maximum) || maximum <= 0)
+				return value;
+			return Math.Min(value, maximum);
 		}
 
 		class WebView2Proxy
