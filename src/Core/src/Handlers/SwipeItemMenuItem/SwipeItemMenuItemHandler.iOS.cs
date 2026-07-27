@@ -126,7 +126,10 @@ namespace Microsoft.Maui.Handlers
 						if (tintColor is null && item.Source is IFontImageSource fontImageSource)
 							tintColor = fontImageSource.Color ?? item.GetTextColor();
 
-						var renderingMode = tintColor is not null
+						// Font sources always template-render so they inherit the resolved tint;
+						// non-font sources template-render only when an explicit tint is provided,
+						// otherwise render as-authored to preserve their original colors (#23074).
+						var renderingMode = (tintColor is not null || item.Source is IFontImageSource)
 							? UIImageRenderingMode.AlwaysTemplate
 							: UIImageRenderingMode.AlwaysOriginal;
 

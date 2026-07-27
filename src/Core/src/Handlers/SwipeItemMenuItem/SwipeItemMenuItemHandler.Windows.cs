@@ -60,9 +60,6 @@ namespace Microsoft.Maui.Handlers
 				return;
 			}
 
-			// Start clean; only the explicit IconColor path sets Foreground.
-			swipeItem.ClearValue(WSwipeItem.ForegroundProperty);
-
 			if (item.Source is null)
 			{
 				swipeItem.IconSource = null;
@@ -70,16 +67,16 @@ namespace Microsoft.Maui.Handlers
 			}
 
 			// When IconColor is set, use ToIconSource to produce a monochrome-capable
-			// IconSource (BitmapIconSource/FontIconSource) and tint it via Foreground.
+			// IconSource (BitmapIconSource/FontIconSource) and tint it via IconSource.Foreground.
+			// Do NOT write SwipeItem.Foreground here — that property also drives TextColor
+			// (see SwipeViewExtensions.UpdateTextColor).
 			if (item.IconColor is not null)
 			{
 				var tintedIconSource = item.Source.ToIconSource(handler.MauiContext);
 				if (tintedIconSource is not null)
 				{
-					var brush = item.IconColor.ToPlatform();
-					tintedIconSource.Foreground = brush;
+					tintedIconSource.Foreground = item.IconColor.ToPlatform();
 					swipeItem.IconSource = tintedIconSource;
-					swipeItem.Foreground = brush;
 					return;
 				}
 			}
