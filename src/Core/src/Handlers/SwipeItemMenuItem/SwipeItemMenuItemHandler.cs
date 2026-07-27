@@ -26,6 +26,7 @@ namespace Microsoft.Maui.Handlers
 				[nameof(ITextStyle.CharacterSpacing)] = MapCharacterSpacing,
 				[nameof(ITextStyle.Font)] = MapFont,
 				[nameof(IMenuElement.Source)] = MapSource,
+				[nameof(ISwipeItemMenuItem.IconColor)] = MapSource,
 			};
 
 		public static CommandMapper<ISwipeItemMenuItem, ISwipeItemMenuItemHandler> CommandMapper =

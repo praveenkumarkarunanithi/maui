@@ -1,1 +1,2 @@
 #nullable enable
+Microsoft.Maui.ISwipeItemMenuItem.IconColor.get -> Microsoft.Maui.Graphics.Color?

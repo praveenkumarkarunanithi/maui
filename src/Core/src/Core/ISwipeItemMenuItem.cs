@@ -13,5 +13,11 @@ namespace Microsoft.Maui
 		/// Gets a value that determines whether this View should be part of the visual tree or not.
 		/// </summary>
 		Visibility Visibility { get; }
+
+		/// <summary>
+		/// Gets the color used to tint a single-color icon source.
+		/// When <see langword="null"/>, the icon renders with its original colors.
+		/// </summary>
+		Color? IconColor { get; }
 	}
 }

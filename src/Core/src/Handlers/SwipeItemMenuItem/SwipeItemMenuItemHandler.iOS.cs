@@ -119,31 +119,19 @@ namespace Microsoft.Maui.Handlers
 
 					try
 					{
-						// Font glyphs are single-color vectors so template rendering + tint makes sense.
-						// Regular raster images should use AlwaysOriginal to preserve their own colors.
-						var fontImageSource = item.Source as IFontImageSource;
-						var renderingMode = fontImageSource is not null ? UIImageRenderingMode.AlwaysTemplate : UIImageRenderingMode.AlwaysOriginal;
-						button.SetImage(resizedImage.ImageWithRenderingMode(renderingMode), UIControlState.Normal);
+						// Tint priority: explicit SwipeItem.IconColor, then FontImageSource.Color.
+						// Non-font sources render with their original colors when no IconColor is set (#23074, #36766).
+						var tintColor = item.IconColor;
 
-						if (fontImageSource is not null)
-						{
-							if (fontImageSource.Color is not null)
-							{
-								button.TintColor = fontImageSource.Color.ToPlatform();
-							}
-							else
-							{
-								var tintColor = item.GetTextColor();
-								if (tintColor is not null)
-								{
-									button.TintColor = tintColor.ToPlatform();
-								}
-							}
-						}
-						else
-						{
-							button.TintColor = null;
-						}
+						if (tintColor is null && item.Source is IFontImageSource fontImageSource)
+							tintColor = fontImageSource.Color ?? item.GetTextColor();
+
+						var renderingMode = tintColor is not null
+							? UIImageRenderingMode.AlwaysTemplate
+							: UIImageRenderingMode.AlwaysOriginal;
+
+						button.SetImage(resizedImage.ImageWithRenderingMode(renderingMode), UIControlState.Normal);
+						button.TintColor = tintColor?.ToPlatform();
 					}
 					catch (Exception)
 					{

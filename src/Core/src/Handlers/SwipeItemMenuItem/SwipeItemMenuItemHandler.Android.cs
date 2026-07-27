@@ -184,22 +184,17 @@ namespace Microsoft.Maui.Handlers
 						platformImage.SetBounds(0, 0, iconWidth, iconHeight);
 					}
 
-					if (item.Source is IFontImageSource fontImageSource)
-					{
-						if (fontImageSource.Color is not null)
-						{
-							platformImage.SetColorFilter(fontImageSource.Color.ToPlatform(), FilterMode.SrcAtop);
-						}
-						else
-						{
-							var textColor = item.GetTextColor()?.ToPlatform();
+					// Tint priority: explicit SwipeItem.IconColor, then FontImageSource.Color.
+					// Non-font sources render with their original colors when no IconColor is set (#23074, #36766).
+					var tintColor = item.IconColor;
 
-							if (textColor is not null)
-							{
-								platformImage.SetColorFilter(textColor.Value, FilterMode.SrcAtop);
-							}
-						}
-					}
+					if (tintColor is null && item.Source is IFontImageSource fontImageSource)
+						tintColor = fontImageSource.Color ?? item.GetTextColor();
+
+					if (tintColor is not null)
+						platformImage.SetColorFilter(tintColor.ToPlatform(), FilterMode.SrcAtop);
+					else
+						platformImage.ClearColorFilter();
 				}
 
 				button.SetCompoundDrawables(null, platformImage, null, null);

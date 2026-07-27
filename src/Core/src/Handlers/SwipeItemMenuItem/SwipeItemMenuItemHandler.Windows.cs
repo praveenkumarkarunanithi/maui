@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Maui.Platform;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -59,10 +60,28 @@ namespace Microsoft.Maui.Handlers
 				return;
 			}
 
+			// Start clean; only the explicit IconColor path sets Foreground.
+			swipeItem.ClearValue(WSwipeItem.ForegroundProperty);
+
 			if (item.Source is null)
 			{
 				swipeItem.IconSource = null;
 				return;
+			}
+
+			// When IconColor is set, use ToIconSource to produce a monochrome-capable
+			// IconSource (BitmapIconSource/FontIconSource) and tint it via Foreground.
+			if (item.IconColor is not null)
+			{
+				var tintedIconSource = item.Source.ToIconSource(handler.MauiContext);
+				if (tintedIconSource is not null)
+				{
+					var brush = item.IconColor.ToPlatform();
+					tintedIconSource.Foreground = brush;
+					swipeItem.IconSource = tintedIconSource;
+					swipeItem.Foreground = brush;
+					return;
+				}
 			}
 
 			var imageSourceServiceProvider = handler.MauiContext.Services.GetRequiredService<IImageSourceServiceProvider>();

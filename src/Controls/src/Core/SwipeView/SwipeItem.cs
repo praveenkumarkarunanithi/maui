@@ -13,6 +13,9 @@ namespace Microsoft.Maui.Controls
 		/// <summary>Bindable property for <see cref="BackgroundColor"/>.</summary>
 		public static readonly BindableProperty BackgroundColorProperty = BindableProperty.Create(nameof(BackgroundColor), typeof(Color), typeof(SwipeItem), null);
 
+		/// <summary>Bindable property for <see cref="IconColor"/>.</summary>
+		public static readonly BindableProperty IconColorProperty = BindableProperty.Create(nameof(IconColor), typeof(Color), typeof(SwipeItem), null);
+
 		/// <summary>Bindable property for <see cref="IsVisible"/>.</summary>
 		public static readonly BindableProperty IsVisibleProperty = BindableProperty.Create(nameof(IsVisible), typeof(bool), typeof(SwipeItem), true, propertyChanged: OnIsVisibleChanged);
 
@@ -23,6 +26,17 @@ namespace Microsoft.Maui.Controls
 		{
 			get { return (Color)GetValue(BackgroundColorProperty); }
 			set { SetValue(BackgroundColorProperty, value); }
+		}
+
+		/// <summary>
+		/// Gets or sets the color used to tint a single-color <see cref="MenuItem.IconImageSource"/>.
+		/// When <see langword="null"/> (the default), the icon renders with its original colors.
+		/// This is a bindable property.
+		/// </summary>
+		public Color IconColor
+		{
+			get { return (Color)GetValue(IconColorProperty); }
+			set { SetValue(IconColorProperty, value); }
 		}
 
 		/// <summary>
@@ -37,6 +51,8 @@ namespace Microsoft.Maui.Controls
 		public event EventHandler<EventArgs> Invoked;
 
 		Paint ISwipeItemMenuItem.Background => new SolidPaint(BackgroundColor);
+
+		Color ISwipeItemMenuItem.IconColor => IconColor;
 
 		Visibility ISwipeItemMenuItem.Visibility => this.IsVisible ? Visibility.Visible : Visibility.Collapsed;
 
