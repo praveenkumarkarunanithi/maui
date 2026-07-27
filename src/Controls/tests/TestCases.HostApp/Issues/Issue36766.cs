@@ -20,9 +20,9 @@ public class Issue36766 : ContentPage
 		{
 			BackgroundColor = Colors.Black,
 			IconImageSource = "fruitsicon.png",
-			IconColor = Colors.White,
 			Text = "Back",
 		};
+		swipeItem.SetAppTheme(SwipeItem.IconColorProperty, Colors.Black, Colors.White);
 
 		var swipeItems = new SwipeItems { swipeItem };
 		swipeItems.Mode = SwipeMode.Execute;
