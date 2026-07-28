@@ -21,6 +21,8 @@ public class Issue36766 : _IssuesUITest
 		App.Tap("OpenSwipeButton");
 
 		VerifyScreenshot();
+
+		App.Tap("ResetThemeButton");
 	}
 #endif
 }

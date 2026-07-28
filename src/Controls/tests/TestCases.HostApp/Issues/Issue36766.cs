@@ -16,6 +16,13 @@ public class Issue36766 : ContentPage
 
 		var openBtn = new Button { AutomationId = "OpenSwipeButton", Text = "Open Swipe" };
 
+		var resetThemeBtn = new Button { AutomationId = "ResetThemeButton", Text = "Reset Theme" };
+		resetThemeBtn.Clicked += (_, _) =>
+		{
+			if (Application.Current is not null)
+				Application.Current.UserAppTheme = AppTheme.Unspecified;
+		};
+
 		var swipeItem = new SwipeItem
 		{
 			BackgroundColor = Colors.Black,
@@ -56,11 +63,13 @@ public class Issue36766 : ContentPage
 			RowDefinitions =
 			{
 				new RowDefinition { Height = GridLength.Auto },
+				new RowDefinition { Height = GridLength.Auto },
 				new RowDefinition { Height = GridLength.Star },
 			},
 		};
 		grid.Add(openBtn, 0, 0);
-		grid.Add(_swipeView, 0, 1);
+		grid.Add(resetThemeBtn, 0, 1);
+		grid.Add(_swipeView, 0, 2);
 		Content = grid;
 	}
 

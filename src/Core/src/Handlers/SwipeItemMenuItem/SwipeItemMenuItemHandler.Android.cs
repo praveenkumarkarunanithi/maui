@@ -186,15 +186,15 @@ namespace Microsoft.Maui.Handlers
 
 					// Tint priority: explicit SwipeItem.IconColor, then FontImageSource.Color.
 					// Non-font sources render with their original colors when no IconColor is set (#23074, #36766).
+					// Only actively set a color filter when we have a resolved tint — mirrors the
+					// pre-IconColor passive behavior so a freshly-loaded drawable's inherent state is preserved.
 					var tintColor = item.IconColor;
 
 					if (tintColor is null && item.Source is IFontImageSource fontImageSource)
 						tintColor = fontImageSource.Color ?? item.GetTextColor();
 
 					if (tintColor is not null)
-						platformImage.SetColorFilter(tintColor.ToPlatform(), FilterMode.SrcAtop);
-					else
-						platformImage.ClearColorFilter();
+						platformImage.Mutate().SetColorFilter(tintColor.ToPlatform(), FilterMode.SrcAtop);
 				}
 
 				button.SetCompoundDrawables(null, platformImage, null, null);
