@@ -70,6 +70,14 @@ public class PlatformDrawableStyle {
         return Color.alpha(this.solidColor) == 0;
     }
 
+    // Returns true only for an EXPLICIT transparent paint (SOLID or gradient with all
+    // alpha=0). Excludes PlatformPaintType.NONE — applyStyle() renders NONE via the
+    // background fallback, so its visible band still reaches fullClipPath. Used by
+    // drawShadow() to decide silhouette (clipPath vs fullClipPath). See #36942 review.
+    public boolean getIsExplicitTransparentStroke() {
+        return this.paintType != PlatformPaintType.NONE && getIsFullyTransparent();
+    }
+
     public int getPaintType() {
         return this.paintType;
     }

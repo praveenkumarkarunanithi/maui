@@ -269,15 +269,16 @@ public abstract class PlatformDrawable extends PaintDrawable implements Platform
         }
 
         Path contentPath;
-        
+
         if (this.hasShape) {
             tryUpdateClipPath();
             if (this.fullClipPath == null) {
                 return;
             }
-            // Use the inner clipPath when the border draws no pixels so the shadow
-            // hugs the visible fill instead of the outer stroke bounds (#36942).
-            contentPath = this.borderStyle.getIsFullyTransparent()
+            // Use inner clipPath only when the stroke is EXPLICITLY transparent (Stroke="Transparent"
+            // or gradient with all alpha=0). PaintType.NONE (absent stroke) still paints via the
+            // background fallback in onDraw, so its visible band reaches fullClipPath (#36942 review).
+            contentPath = this.borderStyle.getIsExplicitTransparentStroke()
                 ? this.clipPath
                 : this.fullClipPath;
         } else {
