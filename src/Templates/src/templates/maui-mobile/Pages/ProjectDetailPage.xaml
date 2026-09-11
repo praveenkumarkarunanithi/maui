@@ -38,7 +38,8 @@
 
               <sf:SfTextInputLayout
                     Hint="Category"
-                    SemanticProperties.Description="ComboBox to select a category. Activate to browse and select a category">
+                    SemanticProperties.Description="ComboBox to select a category. Activate to browse and select a category"
+                    SemanticProperties.Hint="Category ComboBox, State Collapsed">
                     <Picker ItemsSource="{Binding Categories}"
                             SelectedItem="{Binding Category}"
                             SelectedIndex="{Binding CategoryIndex}"

@@ -38,6 +38,7 @@
               <sf:SfTextInputLayout
                     IsVisible="{Binding IsExistingProject}"
                     SemanticProperties.Description="ComboBox to select a project. Activate to browse and select a project"
+                    SemanticProperties.Hint="Project ComboBox, State Collapsed"
                     Hint="Project">
                     <Picker 
                         ItemsSource="{Binding Projects}"
