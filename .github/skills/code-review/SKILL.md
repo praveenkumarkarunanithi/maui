@@ -32,6 +32,7 @@ Standalone skill that evaluates PR code changes for correctness, safety, perform
 4. **Severity calibration** — Distinguish errors from warnings from suggestions. Not everything is critical
 5. **Failure-mode probing** — Challenge your own conclusions with real failure scenarios, not softballs
 6. **Propagation-aware guards** — For an early return, idempotency flag, or latch above downstream side effects, trace every set/clear path and a repeat call after recipients or state change. If that trace exposes concrete misbehavior, do not dismiss it as rare or rationalize it into `LGTM`: use `NEEDS_DISCUSSION` while the failure remains unresolved, or `NEEDS_CHANGES` when the exact state transition verifies a ❌ Error.
+7. **Authentication is not availability** — A public GitHub PR remains reviewable when `gh` is unauthenticated. Never stop or ask for a token merely because a `gh` command failed; pivot immediately to anonymous public REST/web retrieval.
 
 ## Inputs
 
@@ -65,6 +66,29 @@ that the fixture does not provide. Then continue at Step 1.5.
 
 For a live `pr_number`:
 
+**If a retrieval command fails, the PR is still available.** A failing or
+unauthenticated command is a fact about that one tool, not about the review.
+`gh api` also requires authentication, so it is not an unauthenticated fallback.
+For public `dotnet/maui` PRs, pivot to anonymous read-only retrieval:
+
+```bash
+# Candidate patch:
+curl -fsSL -H 'Accept: application/vnd.github.patch' \
+  https://api.github.com/repos/dotnet/maui/pulls/<PR_NUMBER>
+
+# Changed-file metadata and patches:
+curl -fsSL \
+  'https://api.github.com/repos/dotnet/maui/pulls/<PR_NUMBER>/files?per_page=100'
+
+```
+
+Equivalent `web_fetch` calls are acceptable. Use response `raw_url` values or
+`https://raw.githubusercontent.com/dotnet/maui/<HEAD_SHA>/<PATH>` for full
+changed-file contents. A local checkout with `git diff` is another valid route.
+Anonymous API rate limiting may require fewer targeted requests, but it is not
+an authentication blocker. Never ask the caller to provide a token or paste the
+diff until anonymous retrieval and local checkout routes have both failed.
+
 1. **Get the diff:**
    ```bash
    gh pr diff <PR_NUMBER> --repo dotnet/maui
@@ -91,7 +115,7 @@ When changed code classifies external tool output with a regex or string literal
 
 1. Locate and read the producer, even when it is outside the diff.
 2. State the exact condition under which the producer emits each matched token. Confirming that the text exists is not enough: compare the producer's emission condition with the consumer's semantic assumption.
-3. Construct an ordinary negative case that must not trip the classifier, then trace it through every downstream guard, cap, veto, or early return.
+3. Construct an ordinary negative case that must not trip the classifier, then trace it through every downstream guard, cap, veto, or early return. For an incompleteness classifier, the required negative case is a run that **completed with ordinary test failures**, not merely a successful run. A generic nonzero exit proves failure, not incompleteness. If the producer prints a completion token for every exit and the consumer treats its nonzero form as killed, hung, crashed, or incomplete, report the false positive unless an authoritative producer contract proves nonzero exits are exclusive to incomplete runs.
 4. If the ordinary case reaches the restrictive path, report a correctness finding and do not return `LGTM` unless the over-restriction is explicitly intended and documented. Fail-closed direction does not make the behavior correct.
 
 Before the verdict, include an **External Output Contract** table with these columns:
@@ -103,9 +127,57 @@ A row that only confirms matching text, without comparing the two conditions, is
 
 These are the direct-execution form of the always-active Logic/Correctness and Regression Prevention CHECKs in `.github/agents/maui-expert-reviewer.md`. If the expert agent is unavailable in the current environment, apply these probes yourself rather than skipping them.
 
+### Step 1.6: Trace Trim and NativeAOT Reachability (When Applicable)
+
+When a change touches `RequiresUnreferencedCode`, `RequiresDynamicCode`,
+`DynamicallyAccessedMembers`, `FeatureGuard`, `FeatureSwitchDefinition`, or
+IL2026/IL3050 suppression:
+
+1. Trace the complete warning path from the guarded call through annotated
+   helpers and generic registration methods. Do not classify a warning as a
+   false positive without locating the annotation or dynamic-code operation
+   that produced it.
+2. Distinguish the property's ordinary runtime default from its trim-time
+   contract. A getter that defaults to `true` does not by itself prove that a
+   guarded branch remains reachable: `FeatureSwitchDefinition` can substitute
+   the property value, and `FeatureGuard` communicates the resulting
+   reachability to analysis. Verify the attributes and guard before deciding.
+3. Treat an annotated helper called only inside the verified feature guard as
+   structural isolation, not as warning suppression. The helper annotations
+   move the trim/AOT contract to the direct guarded call; they do not make an
+   unconditional call safe.
+4. Accept a pragma only when it suppresses the specific diagnostics around the
+   affected call, restores them immediately, and the supplied source proves the
+   call unreachable in the affected configuration. A documented
+   toolchain-specific analyzer limitation can justify that narrow exception.
+   Reject a broad, unexplained, or reachable suppression.
+5. Base the verdict on the actual guard and annotation chain. Do not infer
+   reachability solely from a default value, a comment, or the presence of a
+   pragma.
+
+Before the verdict, include a **Trim/AOT Evidence Chain** table with these
+columns:
+
+| Link | Source evidence | Reachability implication |
+|---|---|---|
+
+When those sources are available, trace the build-time feature-switch value,
+the runtime property and its attributes, the changed helper or suppression,
+the generic registration annotations, and the annotated handler/dynamic
+operation. Do not omit a link merely because the final verdict seems obvious.
+
 ### Step 2: Delegate to Expert Reviewer
 
-Delegate to the `maui-expert-reviewer` agent (`.github/agents/maui-expert-reviewer.md`) which runs per-dimension sub-agent evaluation. The agent's sole output is `inline-findings.json` — file:line comments in GitHub Review API format.
+For a materialized `review_input`, do **not** delegate or invoke a sub-agent.
+The supplied snapshot is the complete evidence boundary, and the main reviewer
+must read every supporting file and apply the applicable
+`.github/agents/maui-expert-reviewer.md` dimension checks directly. Continue at
+Step 3 after those checks.
+
+For a live `pr_number`, delegate to the `maui-expert-reviewer` agent
+(`.github/agents/maui-expert-reviewer.md`) which runs per-dimension sub-agent
+evaluation. The agent's sole output is `inline-findings.json` — file:line
+comments in GitHub Review API format.
 
 **After the agent finishes:**
 
@@ -138,6 +210,16 @@ Now read the PR description, linked issue, and comments. Treat these as **claims
 1. Where your assessment disagrees with the author's claims, investigate further
 2. If the PR claims a bug fix, verify the root cause analysis matches the code
 3. Check existing review comments to avoid duplicating feedback
+
+If authenticated `gh` retrieval failed during Step 1, use the same anonymous
+read-only fallback for these narrative surfaces now:
+
+```bash
+curl -fsSL https://api.github.com/repos/dotnet/maui/pulls/<PR_NUMBER>
+curl -fsSL 'https://api.github.com/repos/dotnet/maui/pulls/<PR_NUMBER>/reviews?per_page=100'
+curl -fsSL 'https://api.github.com/repos/dotnet/maui/pulls/<PR_NUMBER>/comments?per_page=100'
+curl -fsSL 'https://api.github.com/repos/dotnet/maui/issues/<PR_NUMBER>/comments?per_page=100'
+```
 
 #### 🚨 Prior Review Reconciliation
 
@@ -196,6 +278,12 @@ Classify based on the stdout row content (`pass`/`fail`/`skipping`/`pending`) **
 #### Blast Radius Assessment
 
 **Required when PR modifies:** handlers, platform extensions, toolbar/navigation code, page registration, static state, `PropertyChanged` subscriptions, or startup paths.
+
+**Also required — both the assessment below and Failure-Mode Probing — for behavioral changes to these frequently-regressed component families:** CollectionView, CarouselView, Image/Graphics, Theme/Style, Gesture/Tap, Button/Entry, Toolbar, and Shell/TabBar. This list is complete and sufficient on its own. The `Frequently Regressed Components` table in `.github/agents/maui-expert-reviewer.md` (under the Regression Prevention dimension) mirrors it and adds per-family risk areas; read it for that extra detail when it is present. For these families the usual miss is an untested *adjacent* scenario: a spacing fix that also runs on scroll-position restoration, a `CurrentItem` or loop-mode change that also affects `ScrollTo`, or a touch-handling fix that also affects tap/swipe/gesture.
+
+The Step 2 expert reviewer reports findings only, with no per-dimension activation record, so its output cannot distinguish "Regression Prevention ran and found nothing" from "it never ran" — and a finding from some *other* dimension is not evidence it ran either. Never claim to have confirmed that a dimension fired. For every family that triggers this section, run the Failure-Mode Probing questions below yourself regardless of what the expert reported.
+
+A prose-only change — documentation or comments — **need not** carry the family escalation above, provided the edited text is genuinely inert. It is not inert if it alters a public API doc, an analyzer or compiler directive (`<auto-generated/>`, `#pragma warning`, suppression attributes), an agent-instruction file this repo executes, or a comment stating a precondition other code relies on without re-verifying ("caller must dispose", "always called on the UI thread", "assumes sorted input"). Non-inert prose still gets a full review, but the Blast Radius table below asks runtime questions — startup ordering, static state, `PlatformView` nullity — that a text edit cannot answer. Probe the contract the text actually encodes instead: for a documented precondition, whether the code relying on it still holds; for a directive, which warnings or generated-code handling it now suppresses; for an agent-instruction file, whether the new wording fires on invocations it was not meant to reach, contradicts an instruction elsewhere in the same file, or states a condition the agent cannot evaluate from what it already has.
 
 | Question | Why It Matters |
 |----------|---------------|
@@ -270,7 +358,7 @@ Classify based on the stdout row content (`pass`/`fail`/`skipping`/`pending`) **
 *(If no prior reviews with ❌ Error findings, state "No prior ❌ Error findings found.")*
 
 ### Blast Radius Assessment
-*(Required for infrastructure/handler/platform changes; omit for simple fixes)*
+*(Required for infrastructure/handler/platform changes, or for a frequently-regressed component family or non-inert prose per Step 6; omit for simple fixes)*
 - Runs for all instances: [yes/no — explanation]
 - Startup impact: [yes/no]
 - Static/shared state: [yes/no]
@@ -295,6 +383,11 @@ Classify based on the stdout row content (`pass`/`fail`/`skipping`/`pending`) **
 ### Failure-Mode Probing
 - [Probe]: [Answer — what actually happens in this scenario]
 - [Probe]: [Answer]
+
+### External Output Contract
+*(Required when changed code classifies external tool output; otherwise state "Not applicable.")*
+| Consumer token/pattern | Producer location | Producer emission condition | Consumer assumption | Ordinary negative case | Downstream effect |
+|---|---|---|---|---|---|
 
 ### Verdict: LGTM / NEEDS_CHANGES / NEEDS_DISCUSSION
 **Confidence:** high / medium / low *(justified against calibration table)*
