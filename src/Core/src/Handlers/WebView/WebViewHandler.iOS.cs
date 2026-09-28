@@ -13,6 +13,20 @@ namespace Microsoft.Maui.Handlers
 {
 	public partial class WebViewHandler : ViewHandler<IWebView, WKWebView>
 	{
+		const string ContentHeightProbeScript =
+			"(function(){" +
+			"var b=document.body;if(!b)return -1;" +
+			"var s=document.getElementById('__maui_tsa');" +
+			"if(!s){s=document.createElement('style');s.id='__maui_tsa';s.innerHTML='*,html,body{-webkit-text-size-adjust:100%!important;text-size-adjust:100%!important;}';document.head.appendChild(s);}" +
+			"var k=b.children,m=0;" +
+			"for(var i=0;i<k.length;i++){" +
+			"var r=k[i].getBoundingClientRect();" +
+			"var mb=parseFloat(getComputedStyle(k[i]).marginBottom)||0;" +
+			"var bt=r.bottom+mb;if(bt>m)m=bt;}" +
+			"var p=parseFloat(getComputedStyle(b).paddingBottom)||0;" +
+			"return k.length>0?Math.ceil(m+p):-1;" +
+			"})()";
+
 		readonly HashSet<string> _loadedCookies = new HashSet<string>();
 
 		// Async DOM-measurement state (#36064). All fields reset in MapSource.
@@ -53,6 +67,9 @@ namespace Microsoft.Maui.Handlers
 				wvh._hasNavigated = false;
 				wvh._probeGeneration++;
 			}
+
+			if (webView is null)
+				return;
 
 			IWebViewDelegate? webViewDelegate = handler.PlatformView as IWebViewDelegate;
 
@@ -142,8 +159,7 @@ namespace Microsoft.Maui.Handlers
 			var maxW = VirtualView?.MaximumWidth ?? double.PositiveInfinity;
 			var maxH = VirtualView?.MaximumHeight ?? double.PositiveInfinity;
 
-			// WKWebView.SizeThatFits echoes the current (possibly stale) frame width after
-			// cell recycle; prefer the parent's constraint so the probe wraps at the real width.
+			// Use the available width constraint when valid; otherwise fall back to minimum size.
 			if (hasUsableWidthConstraint)
 				width = ClampToMaximum(widthConstraint, maxW);
 			else if (width <= 0 || double.IsNaN(width))
@@ -193,19 +209,7 @@ namespace Microsoft.Maui.Handlers
 			double probeFrameW = webView.Frame.Width;
 			double probeFrameH = webView.Frame.Height;
 
-			const string js =
-				"(function(){" +
-				"var b=document.body;if(!b)return -1;" +
-				"var k=b.children,m=0;" +
-				"for(var i=0;i<k.length;i++){" +
-				"var r=k[i].getBoundingClientRect();" +
-				"var mb=parseFloat(getComputedStyle(k[i]).marginBottom)||0;" +
-				"var bt=r.bottom+mb;if(bt>m)m=bt;}" +
-				"var p=parseFloat(getComputedStyle(b).paddingBottom)||0;" +
-				"return k.length>0?Math.ceil(m+p):-1;" +
-				"})()";
-
-			webView.EvaluateJavaScript(js, (result, error) =>
+			webView.EvaluateJavaScript(ContentHeightProbeScript, (result, error) =>
 			{
 				// Discard callbacks superseded by MapSource or a later probe.
 				if (gen != _probeGeneration)

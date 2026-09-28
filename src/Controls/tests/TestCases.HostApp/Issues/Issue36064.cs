@@ -107,10 +107,13 @@ public class Issue36064 : ContentPage
 	// issue #32603, is for the HTML author to include a viewport meta. Android and Windows
 	// default to device-width without needing this, so the meta only affects iOS.
 	static string Html(string body, string extraCss = "p { margin: 0; line-height: 1.4; }") =>
-		"<html><head>"
-		+ "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">"
-		+ "<style>body{font-family:Arial,sans-serif;margin:0;padding:8px;font-size:14px;color:#333;}"
-		+ extraCss + "</style></head><body>" + body + "</body></html>";
+    "<!DOCTYPE html><html><head>"
+    + "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no\">"
+    + "<style>"
+    + "*, html, body { -webkit-text-size-adjust: 100% !important; text-size-adjust: 100% !important; }"
+    + "body { font-family: Arial, sans-serif; margin: 0; padding: 8px; font-size: 14px; color: #333; }"
+    + extraCss
+    + "</style></head><body>" + body + "</body></html>";
 
 	class ChatMessage
 	{
