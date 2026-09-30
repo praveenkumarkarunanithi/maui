@@ -2103,7 +2103,6 @@ namespace Microsoft.Maui.Controls.Handlers.Compatibility
 			void UpdateToolbarItems()
 			{
 				Dictionary<string, UIColor> existingTints = null;
-				UIColor prevailingCustomTint = null;
 
 				if (NavigationItem.RightBarButtonItems is not null)
 				{
@@ -2118,7 +2117,6 @@ namespace Microsoft.Maui.Controls.Handlers.Compatibility
 								: (!string.IsNullOrEmpty(oldItem.Title) ? oldItem.Title : i.ToString());
 
 							existingTints[key] = oldItem.TintColor;
-							prevailingCustomTint ??= oldItem.TintColor;
 						}
 						oldItem.Dispose();
 					}
@@ -2160,10 +2158,6 @@ namespace Microsoft.Maui.Controls.Handlers.Compatibility
 						{
 							barButtonItem.TintColor = preservedTint;
 						}
-						else if (prevailingCustomTint != null)
-						{
-							barButtonItem.TintColor = prevailingCustomTint;
-						}
 
 						(primaries ??= []).Add(barButtonItem);
 					}
@@ -2195,8 +2189,6 @@ namespace Microsoft.Maui.Controls.Handlers.Compatibility
 
 					if (existingTints != null && existingTints.TryGetValue("SecondaryToolbarMenuButton", out var secTint))
 						menuButton.TintColor = secTint;
-					else if (prevailingCustomTint != null)
-						menuButton.TintColor = prevailingCustomTint;
 
 					// Since we are adding secondary items under a primary button,
 					// make sure that primaries is initialized
