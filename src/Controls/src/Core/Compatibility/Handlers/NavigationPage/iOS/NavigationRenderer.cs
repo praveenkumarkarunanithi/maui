@@ -1969,11 +1969,73 @@ namespace Microsoft.Maui.Controls.Handlers.Compatibility
 				UpdateToolbarItems();
 			}
 
+			void UpdateSecondaryMenuOnly()
+			{
+				if (NavigationItem.RightBarButtonItems is null)
+					return;
+
+				var menuButton = NavigationItem.RightBarButtonItems.FirstOrDefault(
+					b => b.AccessibilityIdentifier == "SecondaryToolbarMenuButton");
+
+				if (menuButton is null)
+					return;
+
+				var toolbarItems = _tracker.ToolbarItems;
+				List<UIMenuElement> secondaries = null;
+
+				foreach (var item in toolbarItems)
+				{
+					if (item.Order == ToolbarItemOrder.Secondary)
+					{
+						(secondaries ??= []).Add(item.ToSecondarySubToolbarItem().PlatformAction);
+					}
+				}
+
+				if (secondaries is not null && secondaries.Count > 0)
+				{
+					menuButton.Menu = UIMenu.Create(
+						string.Empty,
+						null,
+						UIMenuIdentifier.Edit,
+						UIMenuOptions.DisplayInline,
+						secondaries.ToArray());
+				}
+			}
+
 			void OnToolbarItemPropertyChanged(object sender, PropertyChangedEventArgs e)
 			{
+				var item = sender as ToolbarItem;
+
+				if (item is not null && item.Order != ToolbarItemOrder.Secondary)
+				{
+					if (e.PropertyName == MenuItem.IsEnabledProperty.PropertyName)
+						return;
+				}
+
+				if (item is not null && item.Order == ToolbarItemOrder.Secondary)
+				{
+					if (e.PropertyName == MenuItem.IsEnabledProperty.PropertyName ||
+						e.PropertyName == MenuItem.TextProperty.PropertyName ||
+						e.PropertyName == MenuItem.IconImageSourceProperty.PropertyName)
+					{
+						if (!_toolbarUpdatePending)
+						{
+							_toolbarUpdatePending = true;
+							BeginInvokeOnMainThread(() =>
+							{
+								_toolbarUpdatePending = false;
+								if (!_disposed)
+								{
+									UpdateSecondaryMenuOnly();
+								}
+							});
+						}
+						return;
+					}
+				}
+
 				// Only rebuild toolbar items if a relevant property changed
-				if (e.PropertyName == MenuItem.IsEnabledProperty.PropertyName ||
-					e.PropertyName == MenuItem.TextProperty.PropertyName ||
+				if (e.PropertyName == MenuItem.TextProperty.PropertyName ||
 					e.PropertyName == MenuItem.IconImageSourceProperty.PropertyName)
 				{
 					// Throttle updates to prevent excessive rebuilding when multiple properties change rapidly
@@ -2040,16 +2102,30 @@ namespace Microsoft.Maui.Controls.Handlers.Compatibility
 			[UnconditionalSuppressMessage("Memory", "MEM0003", Justification = "ToolbarItem PropertyChanged subscriptions are removed by CleanToolbarItems before replacement and in Disconnect.")]
 			void UpdateToolbarItems()
 			{
-				// Unsubscribe from previous toolbar item property changes
-				CleanToolbarItems();
+				Dictionary<string, UIColor> existingTints = null;
+				UIColor prevailingCustomTint = null;
 
 				if (NavigationItem.RightBarButtonItems is not null)
 				{
 					for (var i = 0; i < NavigationItem.RightBarButtonItems.Length; i++)
 					{
-						NavigationItem.RightBarButtonItems[i].Dispose();
+						var oldItem = NavigationItem.RightBarButtonItems[i];
+						if (oldItem.TintColor is not null)
+						{
+							existingTints ??= new Dictionary<string, UIColor>();
+							var key = !string.IsNullOrEmpty(oldItem.AccessibilityIdentifier)
+								? oldItem.AccessibilityIdentifier
+								: (!string.IsNullOrEmpty(oldItem.Title) ? oldItem.Title : i.ToString());
+
+							existingTints[key] = oldItem.TintColor;
+							prevailingCustomTint ??= oldItem.TintColor;
+						}
+						oldItem.Dispose();
 					}
 				}
+
+				// Unsubscribe from previous toolbar item property changes
+				CleanToolbarItems();
 
 				if (ToolbarItems is not null)
 				{
@@ -2075,7 +2151,21 @@ namespace Microsoft.Maui.Controls.Handlers.Compatibility
 					}
 					else
 					{
-						(primaries ??= []).Add(item.ToUIBarButtonItem());
+						var barButtonItem = item.ToUIBarButtonItem();
+						var key = !string.IsNullOrEmpty(item.AutomationId)
+							? item.AutomationId
+							: item.Text ?? string.Empty;
+
+						if (existingTints != null && existingTints.TryGetValue(key, out var preservedTint))
+						{
+							barButtonItem.TintColor = preservedTint;
+						}
+						else if (prevailingCustomTint != null)
+						{
+							barButtonItem.TintColor = prevailingCustomTint;
+						}
+
+						(primaries ??= []).Add(barButtonItem);
 					}
 				}
 
@@ -2102,6 +2192,11 @@ namespace Microsoft.Maui.Controls.Handlers.Compatibility
 					{
 						AccessibilityIdentifier = "SecondaryToolbarMenuButton"
 					};
+
+					if (existingTints != null && existingTints.TryGetValue("SecondaryToolbarMenuButton", out var secTint))
+						menuButton.TintColor = secTint;
+					else if (prevailingCustomTint != null)
+						menuButton.TintColor = prevailingCustomTint;
 
 					// Since we are adding secondary items under a primary button,
 					// make sure that primaries is initialized
