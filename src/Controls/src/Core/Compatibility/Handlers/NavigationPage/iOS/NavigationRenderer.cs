@@ -1398,6 +1398,8 @@ namespace Microsoft.Maui.Controls.Handlers.Compatibility
 			bool _disposed;
 			ToolbarTracker _tracker = new ToolbarTracker();
 			List<ToolbarItem> _trackedToolbarItems = new List<ToolbarItem>();
+			readonly Dictionary<ToolbarItem, WeakReference<UIBarButtonItem>> _primaryToolbarItems = new();
+			readonly Dictionary<ToolbarItem, SecondarySubToolbarItem> _secondaryToolbarItems = new();
 			bool _toolbarUpdatePending = false;
 
 			public ParentingViewController(NavigationRenderer navigation)
@@ -1971,11 +1973,8 @@ namespace Microsoft.Maui.Controls.Handlers.Compatibility
 
 			void UpdateSecondaryMenuOnly()
 			{
-				if (NavigationItem.RightBarButtonItems is null)
-					return;
-
-				var menuButton = NavigationItem.RightBarButtonItems.FirstOrDefault(
-					b => b.AccessibilityIdentifier == "SecondaryToolbarMenuButton");
+				var menuButton = NavigationItem.RightBarButtonItems?.FirstOrDefault(
+					item => item.AccessibilityIdentifier == "SecondaryToolbarMenuButton");
 
 				if (menuButton is null)
 					return;
@@ -1985,9 +1984,11 @@ namespace Microsoft.Maui.Controls.Handlers.Compatibility
 
 				foreach (var item in toolbarItems)
 				{
-					if (item.Order == ToolbarItemOrder.Secondary)
+					if (item.Order == ToolbarItemOrder.Secondary &&
+						_secondaryToolbarItems.TryGetValue(item, out var secondaryItem) &&
+						secondaryItem.RecreatePlatformAction() is UIMenuElement action)
 					{
-						(secondaries ??= []).Add(item.ToSecondarySubToolbarItem().PlatformAction);
+						(secondaries ??= []).Add(action);
 					}
 				}
 
@@ -2097,28 +2098,38 @@ namespace Microsoft.Maui.Controls.Handlers.Compatibility
 					item.PropertyChanged -= OnToolbarItemPropertyChanged;
 				}
 				_trackedToolbarItems.Clear();
+
+				foreach (var secondaryItem in _secondaryToolbarItems.Values)
+				{
+					secondaryItem.Disconnect();
+				}
+				_secondaryToolbarItems.Clear();
+				_primaryToolbarItems.Clear();
 			}
 
-			[UnconditionalSuppressMessage("Memory", "MEM0003", Justification = "ToolbarItem PropertyChanged subscriptions are removed by CleanToolbarItems before replacement and in Disconnect.")]
+			[UnconditionalSuppressMessage("Memory", "MEM0003", Justification = "ToolbarItem PropertyChanged subscriptions and secondary item wrappers are cleaned by CleanToolbarItems before replacement and in Disconnect.")]
 			void UpdateToolbarItems()
 			{
-				Dictionary<string, UIColor> existingTints = null;
+				Dictionary<ToolbarItem, UIColor> existingTints = null;
+				var existingSecondaryTint = NavigationItem.RightBarButtonItems?
+					.FirstOrDefault(item => item.AccessibilityIdentifier == "SecondaryToolbarMenuButton")?
+					.TintColor;
+
+				foreach (var toolbarItem in _primaryToolbarItems)
+				{
+					if (toolbarItem.Value.TryGetTarget(out var primaryToolbarItem) &&
+						primaryToolbarItem.TintColor is UIColor tint)
+					{
+						existingTints ??= new Dictionary<ToolbarItem, UIColor>();
+						existingTints[toolbarItem.Key] = tint;
+					}
+				}
 
 				if (NavigationItem.RightBarButtonItems is not null)
 				{
 					for (var i = 0; i < NavigationItem.RightBarButtonItems.Length; i++)
 					{
-						var oldItem = NavigationItem.RightBarButtonItems[i];
-						if (oldItem.TintColor is not null)
-						{
-							existingTints ??= new Dictionary<string, UIColor>();
-							var key = !string.IsNullOrEmpty(oldItem.AccessibilityIdentifier)
-								? oldItem.AccessibilityIdentifier
-								: (!string.IsNullOrEmpty(oldItem.Title) ? oldItem.Title : i.ToString());
-
-							existingTints[key] = oldItem.TintColor;
-						}
-						oldItem.Dispose();
+						NavigationItem.RightBarButtonItems[i].Dispose();
 					}
 				}
 
@@ -2145,20 +2156,24 @@ namespace Microsoft.Maui.Controls.Handlers.Compatibility
 
 					if (item.Order == ToolbarItemOrder.Secondary)
 					{
-						(secondaries ??= []).Add(item.ToSecondarySubToolbarItem().PlatformAction);
+						var secondaryItem = item.ToSecondarySubToolbarItem();
+						_secondaryToolbarItems[item] = secondaryItem;
+
+						if (secondaryItem.PlatformAction is UIMenuElement action)
+						{
+							(secondaries ??= []).Add(action);
+						}
 					}
 					else
 					{
 						var barButtonItem = item.ToUIBarButtonItem();
-						var key = !string.IsNullOrEmpty(item.AutomationId)
-							? item.AutomationId
-							: item.Text ?? string.Empty;
 
-						if (existingTints != null && existingTints.TryGetValue(key, out var preservedTint))
+						if (existingTints != null && existingTints.TryGetValue(item, out var preservedTint))
 						{
 							barButtonItem.TintColor = preservedTint;
 						}
 
+						_primaryToolbarItems[item] = new(barButtonItem);
 						(primaries ??= []).Add(barButtonItem);
 					}
 				}
@@ -2187,8 +2202,10 @@ namespace Microsoft.Maui.Controls.Handlers.Compatibility
 						AccessibilityIdentifier = "SecondaryToolbarMenuButton"
 					};
 
-					if (existingTints != null && existingTints.TryGetValue("SecondaryToolbarMenuButton", out var secTint))
-						menuButton.TintColor = secTint;
+					if (existingSecondaryTint is not null)
+					{
+						menuButton.TintColor = existingSecondaryTint;
+					}
 
 					// Since we are adding secondary items under a primary button,
 					// make sure that primaries is initialized
@@ -2203,7 +2220,10 @@ namespace Microsoft.Maui.Controls.Handlers.Compatibility
 				{
 					foreach (var item in primaries)
 					{
-						item.TintColor = tintColor;
+						if (item.TintColor is null)
+						{
+							item.TintColor = tintColor;
+						}
 					}
 				}
 

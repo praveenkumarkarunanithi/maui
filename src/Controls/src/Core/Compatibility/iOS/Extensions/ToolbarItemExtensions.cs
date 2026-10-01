@@ -31,6 +31,11 @@ namespace Microsoft.Maui.Controls.Compatibility.Platform.iOS
 
 		internal static SecondarySubToolbarItem ToSecondarySubToolbarItem(this ToolbarItem item)
 		{
+			return new SecondarySubToolbarItem(item, CreateSecondaryPlatformAction(item));
+		}
+
+		static UIAction CreateSecondaryPlatformAction(ToolbarItem item)
+		{
 			var weakItem = new WeakReference<ToolbarItem>(item);
 
 			var action = UIAction.Create(item.Text, null, null, _ =>
@@ -56,7 +61,7 @@ namespace Microsoft.Maui.Controls.Compatibility.Platform.iOS
 				});
 			}
 
-			return new SecondarySubToolbarItem(item, action);
+			return action;
 		}
 
 		static UIImage ScaleImageToSystemDefaults(ImageSource imageSource, UIImage uIImage)
@@ -206,6 +211,7 @@ namespace Microsoft.Maui.Controls.Compatibility.Platform.iOS
 		{
 			readonly WeakReference<ToolbarItem> _item;
 			readonly WeakReference<UIAction> _nativeItem;
+			bool _disconnected;
 
 			public UIAction PlatformAction
 			{
@@ -225,20 +231,23 @@ namespace Microsoft.Maui.Controls.Compatibility.Platform.iOS
 				_item = new(item);
 				_nativeItem = new(nativeItem);
 
-				UpdateText(item);
-				UpdateIcon(item);
-				UpdateIsEnabled(item);
+				UpdatePlatformAction(item);
 
 				item.PropertyChanged += OnPropertyChanged;
 
-				if (item is not null && !string.IsNullOrEmpty(item.AutomationId)
-					&& _nativeItem.TryGetTarget(out var nativeAction))
-				{
-					nativeAction.AccessibilityIdentifier = item.AutomationId;
-				}
-
 				//this.SetAccessibilityHint(item);
 				//this.SetAccessibilityLabel(item);
+			}
+
+			internal UIAction RecreatePlatformAction()
+			{
+				if (!_item.TryGetTarget(out var item))
+					return null;
+
+				var nativeItem = CreateSecondaryPlatformAction(item);
+				_nativeItem.SetTarget(nativeItem);
+				UpdatePlatformAction(item);
+				return nativeItem;
 			}
 
 			void OnPropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -252,6 +261,29 @@ namespace Microsoft.Maui.Controls.Compatibility.Platform.iOS
 					UpdateIcon(item);
 				else if (e.PropertyName == MenuItem.IsEnabledProperty.PropertyName)
 					UpdateIsEnabled(item);
+			}
+
+			internal void Disconnect()
+			{
+				if (_disconnected)
+					return;
+
+				_disconnected = true;
+				if (_item.TryGetTarget(out var item))
+					item.PropertyChanged -= OnPropertyChanged;
+			}
+
+			void UpdatePlatformAction(ToolbarItem item)
+			{
+				UpdateText(item);
+				UpdateIcon(item);
+				UpdateIsEnabled(item);
+
+				if (!string.IsNullOrEmpty(item.AutomationId) &&
+					_nativeItem.TryGetTarget(out var nativeAction))
+				{
+					nativeAction.AccessibilityIdentifier = item.AutomationId;
+				}
 			}
 
 			void UpdateIcon(ToolbarItem item)
