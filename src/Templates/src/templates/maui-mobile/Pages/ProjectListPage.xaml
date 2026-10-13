@@ -19,6 +19,7 @@
         <CollectionView ItemsSource="{Binding Projects}"
             Margin="{StaticResource LayoutPadding}"
             x:Name="ProjectsCollectionView"
+            SemanticProperties.Description="{OnPlatform WinUI='Projects collection'}"
             SelectionMode="Single"
             SelectedItem="{Binding SelectedProject}"
             SelectionChangedCommand="{Binding NavigateToProjectCommand, Source={RelativeSource AncestorType={x:Type pageModels:ProjectListPageModel}}, x:DataType=pageModels:ProjectListPageModel}"
