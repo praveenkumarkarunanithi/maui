@@ -11,74 +11,72 @@ public class Issue34965 : _IssuesUITest
 
 	public Issue34965(TestDevice device) : base(device) { }
 
-	[Test]
+	[TestCase(false, false)]
+	[TestCase(false, true)]
+	[TestCase(true, false)]
+	[TestCase(true, true)]
 	[Category(UITestCategories.CarouselView)]
-	public void PreviousPositionUpdatesCorrectlyOnScrollTo()
+	public void ProgrammaticNavigationPreservesPreviousPositionAndItem(bool loop, bool animate)
 	{
-		App.WaitForElement("ScrollTo3Button");
-		App.Tap("ScrollTo3Button");
+		ConfigureCarousel(loop, animate);
 
-		App.RetryAssert(() =>
-		{
-			var currentPos = App.FindElement("CurrentPositionLabel").GetText();
-			Assert.That(currentPos, Does.Contain("3"),
-				"CarouselView should reach position 3 after ScrollTo");
-		});
+		AssertNavigationPath("ScrollToLastButton", "ScrollTo1Button", 9, "Item 10");
+		ResetToStart();
 
-		var previousPositionText = App.FindElement("PreviousPositionLabel").GetText();
-		Assert.That(previousPositionText, Does.Contain("0"),
-			"After scrolling from position 0 to 3, PreviousPosition should be 0");
+		AssertNavigationPath("ScrollToElementLastButton", "ScrollToElement1Button", 9, "Item 10");
+		ResetToStart();
 
-		var previousItemText = App.FindElement("PreviousItemLabel").GetText();
-		Assert.That(previousItemText, Does.Contain("Item 1"),
-			"After scrolling from position 0 to 3, PreviousItem should be 'Item 1'");
+		AssertNavigationPath("SetPosition3Button", "SetPosition1Button", 3, "Item 4");
+		ResetToStart();
 
-		App.Tap("ScrollTo1Button");
-
-		App.RetryAssert(() =>
-		{
-			var currentPos = App.FindElement("CurrentPositionLabel").GetText();
-			Assert.That(currentPos, Does.Contain("1"),
-				"CarouselView should reach position 1 after second ScrollTo");
-		});
-
-		var secondPreviousPosition = App.FindElement("PreviousPositionLabel").GetText();
-		Assert.That(secondPreviousPosition, Does.Contain("3"),
-			"After scrolling from position 3 to 1, PreviousPosition should be 3");
-
-		var secondPreviousItem = App.FindElement("PreviousItemLabel").GetText();
-		Assert.That(secondPreviousItem, Does.Contain("Item 4"),
-			"After scrolling from position 3 to 1, PreviousItem should be 'Item 4'");
+		AssertNavigationPath("SetCurrentItemLastButton", "SetCurrentItem1Button", 9, "Item 10");
 	}
 
-	[Test]
-	[Category(UITestCategories.CarouselView)]
-	public void PreviousPositionUpdatesCorrectlyOnSetPosition()
+	void ConfigureCarousel(bool loop, bool animate)
 	{
-		App.WaitForElement("SetPosition0Button");
+		// if (App is not AppiumIOSApp iosApp || !HelperExtensions.IsIOS26OrHigher(iosApp))
+		// {
+		// 	Assert.Ignore("Issue 34965 reproduces only on iOS 26 and later.");
+		// }
+
+		App.WaitForElement("LoopOffButton");
+		App.Tap(loop ? "LoopOnButton" : "LoopOffButton");
+		App.Tap(animate ? "AnimateOnButton" : "AnimateOffButton");
+		ResetToStart();
+	}
+
+	void ResetToStart()
+	{
 		App.Tap("SetPosition0Button");
+		AssertCurrentState(0, "Item 1");
+	}
 
+	void AssertNavigationPath(string firstAction, string secondAction, int firstPosition, string firstItem)
+	{
+		App.Tap(firstAction);
+		AssertCarouselState(firstPosition, firstItem, 0, "Item 1");
+
+		App.Tap(secondAction);
+		AssertCarouselState(1, "Item 2", firstPosition, firstItem);
+	}
+
+	void AssertCurrentState(int position, string item)
+	{
 		App.RetryAssert(() =>
 		{
-			var pos = App.FindElement("CurrentPositionLabel").GetText();
-			Assert.That(pos, Does.Contain("0"), "CarouselView should be at position 0");
+			Assert.That(App.FindElement("CurrentPositionLabel").GetText(), Is.EqualTo($"Current Position: {position}"));
+			Assert.That(App.FindElement("CurrentItemLabel").GetText(), Is.EqualTo($"Current Item: {item}"));
 		});
+	}
 
-		App.Tap("SetPosition3Button");
-
+	void AssertCarouselState(int position, string item, int previousPosition, string previousItem)
+	{
 		App.RetryAssert(() =>
 		{
-			var currentPos = App.FindElement("CurrentPositionLabel").GetText();
-			Assert.That(currentPos, Does.Contain("3"),
-				"CarouselView should reach position 3 after setting Position = 3");
+			Assert.That(App.FindElement("CurrentPositionLabel").GetText(), Is.EqualTo($"Current Position: {position}"));
+			Assert.That(App.FindElement("CurrentItemLabel").GetText(), Is.EqualTo($"Current Item: {item}"));
+			Assert.That(App.FindElement("PreviousPositionLabel").GetText(), Is.EqualTo($"Previous Position: {previousPosition}"));
+			Assert.That(App.FindElement("PreviousItemLabel").GetText(), Is.EqualTo($"Previous Item: {previousItem}"));
 		});
-
-		var previousPositionText = App.FindElement("PreviousPositionLabel").GetText();
-		Assert.That(previousPositionText, Does.Contain("0"),
-			"After setting Position from 0 to 3, PreviousPosition should be 0");
-
-		var previousItemText = App.FindElement("PreviousItemLabel").GetText();
-		Assert.That(previousItemText, Does.Contain("Item 1"),
-			"After setting Position from 0 to 3, PreviousItem should be 'Item 1'");
 	}
 }

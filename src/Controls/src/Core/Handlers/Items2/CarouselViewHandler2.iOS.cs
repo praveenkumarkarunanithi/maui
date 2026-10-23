@@ -53,14 +53,35 @@ namespace Microsoft.Maui.Controls.Handlers.Items2
 				return;
 			}
 
-			if (args.IsAnimated && args.Mode == ScrollToMode.Position && args.Index >= 0 && args.Index < carouselViewController2.ItemsSource?.ItemCount)
+			var targetPosition = -1;
+			if (args.Mode == ScrollToMode.Position)
 			{
-				carouselViewController2.SetGotoPosition(args.Index);
+				targetPosition = args.Index;
+			}
+			else if (args.Mode == ScrollToMode.Element && carouselViewController2.ItemsSource is not null)
+			{
+				using var targetIndexPath = carouselViewController2.GetIndexForItem(args.Item);
+				if (targetIndexPath is not null && targetIndexPath.Row >= 0 && targetIndexPath.Row <= int.MaxValue)
+				{
+					targetPosition = (int)targetIndexPath.Row;
+				}
+			}
+
+			var itemsSource = carouselViewController2.ItemsSource;
+			var isTargetPositionValid = targetPosition >= 0 && itemsSource is not null && targetPosition < itemsSource.ItemCount;
+			if (isTargetPositionValid)
+			{
+				carouselViewController2.SetGotoPosition(targetPosition);
 			}
 
 			if (VirtualView?.Loop == true)
 			{
-				var goToIndexPath = carouselViewController2.GetScrollToIndexPath(args.Index);
+				if (!isTargetPositionValid)
+				{
+					return;
+				}
+
+				var goToIndexPath = carouselViewController2.GetScrollToIndexPath(targetPosition);
 
 				if (!IsIndexPathValid(goToIndexPath))
 				{

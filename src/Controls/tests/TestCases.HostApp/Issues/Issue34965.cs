@@ -22,7 +22,12 @@ public class Issue34965 : ContentPage
 			"Item 2",
 			"Item 3",
 			"Item 4",
-			"Item 5"
+			"Item 5",
+			"Item 6",
+			"Item 7",
+			"Item 8",
+			"Item 9",
+			"Item 10"
 		};
 
 		_currentItemLabel = new Label
@@ -49,7 +54,7 @@ public class Issue34965 : ContentPage
 			Text = "Previous Position: none"
 		};
 
-		_carouselView = new CarouselView
+		_carouselView = new CarouselView2
 		{
 			AutomationId = "CarouselView",
 			Loop = false,
@@ -72,33 +77,150 @@ public class Issue34965 : ContentPage
 		_carouselView.CurrentItemChanged += OnCurrentItemChanged;
 		_carouselView.PositionChanged += OnPositionChanged;
 
+		var loopOffButton = new Button
+		{
+			AutomationId = "LoopOffButton",
+			Text = "Loop Off"
+		};
+		loopOffButton.Clicked += (s, e) =>
+		{
+			_carouselView.Loop = false;
+		};
+
+		var loopOnButton = new Button
+		{
+			AutomationId = "LoopOnButton",
+			Text = "Loop On"
+		};
+		loopOnButton.Clicked += (s, e) =>
+		{
+			_carouselView.Loop = true;
+		};
+
+		var animateOffButton = new Button
+		{
+			AutomationId = "AnimateOffButton",
+			Text = "Animate Off"
+		};
+		animateOffButton.Clicked += (s, e) =>
+		{
+			_carouselView.IsScrollAnimated = false;
+		};
+
+		var animateOnButton = new Button
+		{
+			AutomationId = "AnimateOnButton",
+			Text = "Animate On"
+		};
+		animateOnButton.Clicked += (s, e) =>
+		{
+			_carouselView.IsScrollAnimated = true;
+		};
+
 		var scrollTo3Button = new Button
 		{
 			AutomationId = "ScrollTo3Button",
 			Text = "Scroll To 3"
 		};
-		scrollTo3Button.Clicked += (s, e) => _carouselView.ScrollTo(3);
+		scrollTo3Button.Clicked += (s, e) =>
+		{
+			var animate = _carouselView.IsScrollAnimated;
+			_carouselView.ScrollTo(3, animate: animate);
+		};
 
 		var scrollTo1Button = new Button
 		{
 			AutomationId = "ScrollTo1Button",
 			Text = "Scroll To 1"
 		};
-		scrollTo1Button.Clicked += (s, e) => _carouselView.ScrollTo(1);
+		scrollTo1Button.Clicked += (s, e) =>
+		{
+			var animate = _carouselView.IsScrollAnimated;
+			_carouselView.ScrollTo(1, animate: animate);
+		};
 
 		var setPosition3Button = new Button
 		{
 			AutomationId = "SetPosition3Button",
 			Text = "Set Position 3"
 		};
-		setPosition3Button.Clicked += (s, e) => _carouselView.Position = 3;
+		setPosition3Button.Clicked += (s, e) =>
+		{
+			_carouselView.Position = 3;
+		};
 
 		var setPosition0Button = new Button
 		{
 			AutomationId = "SetPosition0Button",
 			Text = "Set Position 0"
 		};
-		setPosition0Button.Clicked += (s, e) => _carouselView.Position = 0;
+		setPosition0Button.Clicked += (s, e) =>
+		{
+			_carouselView.Position = 0;
+		};
+
+		var scrollToLastButton = new Button
+		{
+			AutomationId = "ScrollToLastButton",
+			Text = "Scroll To Last"
+		};
+		scrollToLastButton.Clicked += (s, e) =>
+		{
+			var animate = _carouselView.IsScrollAnimated;
+			_carouselView.ScrollTo(_items.Count - 1, animate: animate);
+		};
+
+		var scrollToElementLastButton = new Button
+		{
+			AutomationId = "ScrollToElementLastButton",
+			Text = "Scroll To Last Item"
+		};
+		scrollToElementLastButton.Clicked += (s, e) =>
+		{
+			var animate = _carouselView.IsScrollAnimated;
+			_carouselView.ScrollTo(_items[_items.Count - 1], animate: animate);
+		};
+
+		var scrollToElement1Button = new Button
+		{
+			AutomationId = "ScrollToElement1Button",
+			Text = "Scroll To Item 2"
+		};
+		scrollToElement1Button.Clicked += (s, e) =>
+		{
+			var animate = _carouselView.IsScrollAnimated;
+			_carouselView.ScrollTo(_items[1], animate: animate);
+		};
+
+		var setPosition1Button = new Button
+		{
+			AutomationId = "SetPosition1Button",
+			Text = "Set Position 1"
+		};
+		setPosition1Button.Clicked += (s, e) =>
+		{
+			_carouselView.Position = 1;
+		};
+
+		var setCurrentItemLastButton = new Button
+		{
+			AutomationId = "SetCurrentItemLastButton",
+			Text = "Set CurrentItem Last"
+		};
+		setCurrentItemLastButton.Clicked += (s, e) =>
+		{
+			_carouselView.CurrentItem = _items[_items.Count - 1];
+		};
+
+		var setCurrentItem1Button = new Button
+		{
+			AutomationId = "SetCurrentItem1Button",
+			Text = "Set CurrentItem 2"
+		};
+		setCurrentItem1Button.Clicked += (s, e) =>
+		{
+			_carouselView.CurrentItem = _items[1];
+		};
 
 		Content = new Grid
 		{
@@ -122,12 +244,37 @@ public class Issue34965 : ContentPage
 						new HorizontalStackLayout
 						{
 							Spacing = 8,
+							Children = { loopOffButton, loopOnButton }
+						},
+						new HorizontalStackLayout
+						{
+							Spacing = 8,
+							Children = { animateOffButton, animateOnButton }
+						},
+						new HorizontalStackLayout
+						{
+							Spacing = 8,
 							Children = { scrollTo3Button, scrollTo1Button }
 						},
 						new HorizontalStackLayout
 						{
 							Spacing = 8,
-							Children = { setPosition3Button, setPosition0Button }
+							Children = { scrollToLastButton, scrollToElementLastButton }
+						},
+						new HorizontalStackLayout
+						{
+							Spacing = 8,
+							Children = { scrollToElement1Button, setPosition3Button }
+						},
+						new HorizontalStackLayout
+						{
+							Spacing = 8,
+							Children = { setPosition1Button, setCurrentItemLastButton }
+						},
+						new HorizontalStackLayout
+						{
+							Spacing = 8,
+							Children = { setCurrentItem1Button, setPosition0Button }
 						}
 					}
 				},

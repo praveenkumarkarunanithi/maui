@@ -118,7 +118,7 @@ namespace Microsoft.Maui.Controls.Handlers.Items2
 
 		public override void DraggingStarted(UIScrollView scrollView)
 		{
-			//	_isDragging = true;
+			_gotoPosition = -1;
 			ItemsView?.SetIsDragging(true);
 		}
 
@@ -269,6 +269,23 @@ namespace Microsoft.Maui.Controls.Handlers.Items2
 				carousel.IsScrolling = isScrolling;
 			}
 		}
+
+		internal void SetGotoPosition(int position)
+		{
+			if (ItemsView is CarouselView carousel &&
+				position == carousel.Position &&
+				!carousel.IsScrolling &&
+				CollectionView?.Dragging != true &&
+				CollectionView?.Decelerating != true)
+			{
+				_gotoPosition = -1;
+				return;
+			}
+
+			_gotoPosition = position;
+		}
+
+		internal bool IsGotoPositionPending => _gotoPosition != -1;
 
 		internal NSIndexPath GetScrollToIndexPath(int position)
 		{
@@ -542,7 +559,7 @@ namespace Microsoft.Maui.Controls.Handlers.Items2
 					return;
 				}
 
-				_gotoPosition = goToPosition;
+				SetGotoPosition(goToPosition);
 
 				// This scroll (Position/CurrentItem changes, loop toggles) bypasses ScrollToRequested,
 				// so it must clear/arm the MacCatalyst pending restore itself; otherwise it is not
@@ -586,6 +603,11 @@ namespace Microsoft.Maui.Controls.Handlers.Items2
 			if (!InitialPositionSet || position == -1)
 			{
 				return;
+			}
+
+			if (_gotoPosition != -1 && (CollectionView?.Dragging == true || CollectionView?.Decelerating == true))
+			{
+				_gotoPosition = -1;
 			}
 
 			if (_gotoPosition != -1)

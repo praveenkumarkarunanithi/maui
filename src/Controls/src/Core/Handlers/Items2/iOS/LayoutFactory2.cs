@@ -478,7 +478,8 @@ internal static class LayoutFactory2
 					//since we added one item at the beginning of our ItemSource, we need to subtract one
 					carouselPosition = pageIndex - 1;
 
-					if (itemsView.Position != carouselPosition)
+					var isPendingScroll = cv2Controller.IsGotoPositionPending;
+					if (itemsView.Position != carouselPosition && !isPendingScroll)
 					{
 						//If we are updating the ItemsSource, we don't want to scroll the CollectionView
 						if (cv2Controller.IsUpdating())
