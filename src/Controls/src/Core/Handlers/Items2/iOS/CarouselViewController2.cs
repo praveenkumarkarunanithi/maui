@@ -118,7 +118,7 @@ namespace Microsoft.Maui.Controls.Handlers.Items2
 
 		public override void DraggingStarted(UIScrollView scrollView)
 		{
-			_gotoPosition = -1;
+			//	_isDragging = true;
 			ItemsView?.SetIsDragging(true);
 		}
 
@@ -603,11 +603,6 @@ namespace Microsoft.Maui.Controls.Handlers.Items2
 			if (!InitialPositionSet || position == -1)
 			{
 				return;
-			}
-
-			if (_gotoPosition != -1 && (CollectionView?.Dragging == true || CollectionView?.Decelerating == true))
-			{
-				_gotoPosition = -1;
 			}
 
 			if (_gotoPosition != -1)
