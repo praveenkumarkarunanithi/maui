@@ -4,7 +4,7 @@ namespace Maui.Controls.Sample.Issues;
 
 [Issue(IssueTracker.Github, 34965,
 	"[iOS 26] CarouselView PreviousPosition/PreviousItem incorrect during animated ScrollTo in CarouselViewHandler2",
-	PlatformAffected.iOS)]
+	PlatformAffected.iOS | PlatformAffected.macOS)]
 public class Issue34965 : ContentPage
 {
 	readonly CarouselView _carouselView;

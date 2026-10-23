@@ -1,3 +1,4 @@
+#if IOS || MACCATALYST
 using NUnit.Framework;
 using UITest.Appium;
 using UITest.Core;
@@ -34,11 +35,6 @@ public class Issue34965 : _IssuesUITest
 
 	void ConfigureCarousel(bool loop, bool animate)
 	{
-		// if (App is not AppiumIOSApp iosApp || !HelperExtensions.IsIOS26OrHigher(iosApp))
-		// {
-		// 	Assert.Ignore("Issue 34965 reproduces only on iOS 26 and later.");
-		// }
-
 		App.WaitForElement("LoopOffButton");
 		App.Tap(loop ? "LoopOnButton" : "LoopOffButton");
 		App.Tap(animate ? "AnimateOnButton" : "AnimateOffButton");
@@ -80,3 +76,4 @@ public class Issue34965 : _IssuesUITest
 		});
 	}
 }
+#endif
