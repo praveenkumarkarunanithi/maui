@@ -31,6 +31,8 @@ public class Issue27242Page1 : ContentPage
 	}
 	public Issue27242Page1()
 	{
+		SafeAreaEdges = new SafeAreaEdges(SafeAreaRegions.SoftInput);
+
 		var grid = new Grid
 		{
 			Padding = 20,
