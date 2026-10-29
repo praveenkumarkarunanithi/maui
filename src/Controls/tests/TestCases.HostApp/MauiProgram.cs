@@ -75,6 +75,7 @@ namespace Maui.Controls.Sample
 				handlers.AddHandler(typeof(Issue34310NativeHostView), typeof(Issue34310NativeHostViewHandler));
 #endif
 #if ANDROID
+				handlers.AddHandler(typeof(Issue19831Renderer), typeof(Microsoft.Maui.Controls.Handlers.Compatibility.ShellRenderer));
 				handlers.AddHandler(typeof(Issue7814TouchClaimView), typeof(Issue7814TouchClaimViewHandler));
 #endif
 			});
