@@ -109,5 +109,31 @@ namespace Microsoft.Maui.Controls.Core.UnitTests
 			collection.Remove(behavior);
 			Assert.Null(behavior.AssociatedObject);
 		}
+
+		[Theory]
+		[InlineData(true)]
+		[InlineData(false)]
+		public void PlatformBehaviorDoesNotAttachWithoutHandler(bool addBehaviorBeforeLoaded)
+		{
+			var page = new ContentPage();
+			var behavior = new RecordingPlatformBehavior();
+			if (addBehaviorBeforeLoaded)
+				page.Behaviors.Add(behavior);
+
+			_ = new Window(page);
+			if (!addBehaviorBeforeLoaded)
+				page.Behaviors.Add(behavior);
+
+			Assert.True(page.IsLoaded);
+			Assert.False(behavior.IsAttached);
+		}
+
+		class RecordingPlatformBehavior : PlatformBehavior<ContentPage>
+		{
+			public bool IsAttached { get; private set; }
+
+			protected override void OnAttachedTo(ContentPage bindable, object platformView) =>
+				IsAttached = true;
+		}
 	}
 }
