@@ -23,6 +23,42 @@ namespace Microsoft.Maui.DeviceTests
 {
 	public partial class CollectionViewTests
 	{
+		[Fact]
+		public async Task UnconstrainedHorizontalCollectionViewPreservesNativeProbing()
+		{
+			SetupBuilder();
+
+			await InvokeOnMainThreadAsync(() =>
+			{
+				var collectionView = new CollectionView
+				{
+					ItemsLayout = new LinearItemsLayout(ItemsLayoutOrientation.Horizontal),
+					ItemsSource = new[] { "item: 0", "item: 1" },
+					ItemTemplate = new DataTemplate(() => new Label { Text = "Item" })
+				};
+
+				var handler = new CollectionViewHandler2();
+				handler.SetMauiContext(MauiContext);
+				collectionView.Handler = handler;
+				try
+				{
+					var platformView = handler.Controller.CollectionView;
+					var originalFrame = platformView.Frame;
+					for (int i = 0; i < 2; i++)
+					{
+						var size = handler.GetDesiredSize(350, double.PositiveInfinity);
+						Assert.True(double.IsFinite(size.Height) && size.Height > 0);
+						Assert.NotEmpty(platformView.VisibleCells);
+						Assert.Equal(originalFrame, platformView.Frame);
+					}
+				}
+				finally
+				{
+					((IElementHandler)handler).DisconnectHandler();
+				}
+			});
+		}
+
 		[Theory]
 		[InlineData(0, false, double.PositiveInfinity, 250, -1, double.PositiveInfinity)]
 		[InlineData(1, false, double.PositiveInfinity, 250, -1, double.PositiveInfinity)]
