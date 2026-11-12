@@ -315,7 +315,8 @@ namespace Microsoft.Maui.Controls.Handlers.Items2
 
 				var measurementWidth = widthConstraint;
 				var measurementHeight = heightConstraint;
-				if (VirtualView is CollectionView and IView view)
+				IView view = VirtualView;
+				if (VirtualView is CollectionView)
 				{
 					static double ResolveMeasurementConstraint(double constraint, double exact, double minimum, double maximum)
 					{
@@ -341,10 +342,11 @@ namespace Microsoft.Maui.Controls.Handlers.Items2
 				// UICollectionViewCompositionalLayout hasn't run a layout pass and therefore
 				// CollectionViewContentSize is still zero. Force a layout pass with the given constraints
 				// so the layout can compute actual content size from its items.
-				// Skip unbounded CollectionView cross-axis probes to avoid measuring the synthetic frame.
+				// Skip unbounded probes when a minimum can supply the cross-axis size.
+				// Otherwise preserve native probing so an unconstrained Auto row does not collapse.
 				bool canMeasureContent = VirtualView is not CollectionView ||
-					((scrollDirection != UICollectionViewScrollDirection.Horizontal || double.IsFinite(measurementHeight)) &&
-					 (scrollDirection != UICollectionViewScrollDirection.Vertical || double.IsFinite(measurementWidth)));
+					((scrollDirection != UICollectionViewScrollDirection.Horizontal || double.IsFinite(measurementHeight) || !(view.MinimumHeight > 0)) &&
+					 (scrollDirection != UICollectionViewScrollDirection.Vertical || double.IsFinite(measurementWidth) || !(view.MinimumWidth > 0)));
 
 				if (canMeasureContent && (collectionView.Window == null || frameIsZeroInScrollDirection))
 				{
