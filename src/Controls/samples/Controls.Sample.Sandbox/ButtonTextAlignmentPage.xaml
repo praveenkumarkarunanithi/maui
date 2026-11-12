@@ -1,170 +1,151 @@
 <?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Sandbox verification page for dotnet/maui#10463
+    Button.HorizontalTextAlignment / Button.VerticalTextAlignment
+
+    HOW TO VERIFY (Android, iOS, Mac Catalyst, Windows):
+    Every case below has a green "EXPECTED" line. Compare the purple Button(s) above it
+    with that line. A case passes when what you see matches the EXPECTED text exactly.
+    All purple Buttons use Padding = 16, so "Start/End" content should sit ~16px away
+    from the Button edge (not touching it, not centered).
+
+    Mapping:  Horizontal Start = left (LTR) / right (RTL),  End = right (LTR) / left (RTL)
+              Vertical   Start = top,  End = bottom,  Center = middle
+    Justify is NOT supported for Button and must throw ArgumentException.
+-->
 <ContentPage x:Class="Maui.Controls.Sample.ButtonTextAlignmentPage"
              xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              Title="Button text alignment">
     <ContentPage.Resources>
-        <Style x:Key="ScenarioButton" TargetType="Button">
-            <Setter Property="WidthRequest" Value="260" />
-            <Setter Property="HeightRequest" Value="120" />
+        <Style x:Key="CaseButton" TargetType="Button">
+            <Setter Property="WidthRequest" Value="280" />
+            <Setter Property="HeightRequest" Value="110" />
             <Setter Property="HorizontalOptions" Value="Start" />
             <Setter Property="Padding" Value="16" />
-            <Setter Property="FontSize" Value="18" />
+            <Setter Property="FontSize" Value="16" />
             <Setter Property="BackgroundColor" Value="#512BD4" />
             <Setter Property="TextColor" Value="White" />
-            <Setter Property="BorderColor" Value="#808080" />
-            <Setter Property="BorderWidth" Value="1" />
+            <Setter Property="CornerRadius" Value="4" />
+        </Style>
+        <Style x:Key="MatrixButton" TargetType="Button">
+            <Setter Property="WidthRequest" Value="110" />
+            <Setter Property="HeightRequest" Value="90" />
+            <Setter Property="Padding" Value="8" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="BackgroundColor" Value="#512BD4" />
+            <Setter Property="TextColor" Value="White" />
+            <Setter Property="CornerRadius" Value="4" />
+        </Style>
+        <Style x:Key="CaseTitle" TargetType="Label">
+            <Setter Property="FontSize" Value="18" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="Margin" Value="0,16,0,0" />
+        </Style>
+        <Style x:Key="Expected" TargetType="Label">
+            <Setter Property="TextColor" Value="#1B7F3B" />
+            <Setter Property="FontAttributes" Value="Bold" />
         </Style>
     </ContentPage.Resources>
-    <Grid>
-        <ScrollView AutomationId="ButtonAlignmentScrollView">
-            <VerticalStackLayout Padding="24" Spacing="16">
-                <Label Text="Button text alignment"
-                       FontSize="24"
-                       FontAttributes="Bold"
-                       SemanticProperties.HeadingLevel="Level1" />
-                <Label AutomationId="ButtonAlignmentInstructions"
-                       Text="Scenario for dotnet/maui#10463. On Android, iOS, and Windows, align text and its image together inside the padded Button. Native default clears the selected axis. Image-only Buttons remain unchanged. Mac Catalyst remains unverified." />
 
-                <Label Text="Unmodified default Button"
-                       FontAttributes="Bold" />
-                <Button x:Name="DefaultButton"
-                        AutomationId="DefaultAlignmentButton"
-                        Text="Default button"
-                        Clicked="OnScenarioClicked" />
-                <Label Text="The default Button above is not affected by the controls below." />
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="8">
+            <Label Text="Button text alignment (#10463)" FontSize="24" FontAttributes="Bold" />
+            <Label Text="Compare each purple Button with the green EXPECTED line under it. All case Buttons use Padding 16, so Start/End text should sit about 16px from the edge." />
 
-                <VerticalStackLayout x:Name="ScenarioLayout" Spacing="12">
-                    <Label Text="Live text-only preview"
-                           FontAttributes="Bold" />
-                    <Button x:Name="TextPreview"
-                            AutomationId="TextAlignmentPreview"
-                            Style="{StaticResource ScenarioButton}"
-                            LineBreakMode="WordWrap"
-                            Clicked="OnScenarioClicked" />
+            <!-- CASE 1 -->
+            <Label Style="{StaticResource CaseTitle}" Text="1. Default (properties NOT set)" />
+            <Button Style="{StaticResource CaseButton}" Text="Default" AutomationId="Case1Default" />
+            <Label Style="{StaticResource Expected}"
+                   Text="EXPECTED: Text centered horizontally AND vertically - identical to a Button before this feature. Getter reports Center/Center:" />
+            <Label x:Name="Case1Values" AutomationId="Case1Values" />
 
-                    <Label Text="Live text and image preview"
-                           FontAttributes="Bold" />
-                    <Button x:Name="ImageTextPreview"
-                            AutomationId="ImageTextAlignmentPreview"
-                            Style="{StaticResource ScenarioButton}"
-                            LineBreakMode="WordWrap"
-                            Clicked="OnScenarioClicked" />
-                </VerticalStackLayout>
+            <!-- CASE 2 -->
+            <Label Style="{StaticResource CaseTitle}" Text="2. All 9 combinations (H x V)" />
+            <Label Text="Label text = where it must appear. T/M/B = top/middle/bottom, L/C/R = left/center/right." />
+            <Grid ColumnDefinitions="Auto,Auto,Auto" RowDefinitions="Auto,Auto,Auto"
+                  ColumnSpacing="6" RowSpacing="6" HorizontalOptions="Start">
+                <Button AutomationId="Case2TL" Grid.Row="0" Grid.Column="0" Style="{StaticResource MatrixButton}" Text="TL" HorizontalTextAlignment="Start"  VerticalTextAlignment="Start" />
+                <Button AutomationId="Case2TC" Grid.Row="0" Grid.Column="1" Style="{StaticResource MatrixButton}" Text="TC" HorizontalTextAlignment="Center" VerticalTextAlignment="Start" />
+                <Button AutomationId="Case2TR" Grid.Row="0" Grid.Column="2" Style="{StaticResource MatrixButton}" Text="TR" HorizontalTextAlignment="End"    VerticalTextAlignment="Start" />
+                <Button AutomationId="Case2ML" Grid.Row="1" Grid.Column="0" Style="{StaticResource MatrixButton}" Text="ML" HorizontalTextAlignment="Start"  VerticalTextAlignment="Center" />
+                <Button AutomationId="Case2MC" Grid.Row="1" Grid.Column="1" Style="{StaticResource MatrixButton}" Text="MC" HorizontalTextAlignment="Center" VerticalTextAlignment="Center" />
+                <Button AutomationId="Case2MR" Grid.Row="1" Grid.Column="2" Style="{StaticResource MatrixButton}" Text="MR" HorizontalTextAlignment="End"    VerticalTextAlignment="Center" />
+                <Button AutomationId="Case2BL" Grid.Row="2" Grid.Column="0" Style="{StaticResource MatrixButton}" Text="BL" HorizontalTextAlignment="Start"  VerticalTextAlignment="End" />
+                <Button AutomationId="Case2BC" Grid.Row="2" Grid.Column="1" Style="{StaticResource MatrixButton}" Text="BC" HorizontalTextAlignment="Center" VerticalTextAlignment="End" />
+                <Button AutomationId="Case2BR" Grid.Row="2" Grid.Column="2" Style="{StaticResource MatrixButton}" Text="BR" HorizontalTextAlignment="End"    VerticalTextAlignment="End" />
+            </Grid>
+            <Label Style="{StaticResource Expected}"
+                   Text="EXPECTED: Each label sits at the position its text names. The labels form a 3x3 pattern: TL in the top-left corner of the first Button, BR in the bottom-right corner of the last, and so on. None touch the Button edge (8px padding)." />
 
-                <Label x:Name="ClickStatusLabel"
-                       AutomationId="ButtonAlignmentClickStatus"
-                       Text="Clicks: 0" />
-                <Label x:Name="SettingsLabel"
-                       AutomationId="ButtonAlignmentSettings" />
+            <!-- CASE 3 -->
+            <Label Style="{StaticResource CaseTitle}" Text="3. Multi-line text (H=Start, V=Start, then H=End, V=End)" />
+            <Button AutomationId="Case3MultilineStart" Style="{StaticResource CaseButton}" Text="Short&#10;A much longer second line"
+                    LineBreakMode="WordWrap" HorizontalTextAlignment="Start" VerticalTextAlignment="Start" />
+            <Button AutomationId="Case3MultilineEnd" Style="{StaticResource CaseButton}" Text="Short&#10;A much longer second line"
+                    LineBreakMode="WordWrap" HorizontalTextAlignment="End" VerticalTextAlignment="End" />
+            <Label Style="{StaticResource Expected}"
+                   Text="EXPECTED: First Button - text block at the TOP-LEFT and both lines LEFT-aligned (left edges line up). Second Button - block at the BOTTOM-RIGHT and both lines RIGHT-aligned (right edges line up)." />
 
-                <Label Text="Runtime controls"
-                       FontAttributes="Bold"
-                       SemanticProperties.HeadingLevel="Level2" />
-                <Label Text="Horizontal text alignment (Start/End follow layout direction)" />
-                <Picker x:Name="HorizontalAlignmentPicker"
-                        AutomationId="ButtonAlignmentHorizontal"
-                        Title="Horizontal text alignment" />
-                <Label Text="Vertical text alignment (Start is top; End is bottom)" />
-                <Picker x:Name="VerticalAlignmentPicker"
-                        AutomationId="ButtonAlignmentVertical"
-                        Title="Vertical text alignment" />
-                <Label Text="Preview text (enter a newline to test multiple lines)" />
-                <Editor x:Name="PreviewTextEditor"
-                        AutomationId="ButtonAlignmentTextEditor"
-                        SemanticProperties.Description="Text for both live Button previews"
-                        AutoSize="TextChanges"
-                        MinimumHeightRequest="80"
-                        Text="Save changes&#10;A second line of text" />
+            <!-- CASE 4 -->
+            <Label Style="{StaticResource CaseTitle}" Text="4. Text + image (H=End, V=End), each ImagePosition" />
+            <FlexLayout x:Name="ImageCasesLayout" Wrap="Wrap" JustifyContent="Start" />
+            <Label Style="{StaticResource Expected}"
+                   Text="EXPECTED: In all 4 Buttons the image and text move TOGETHER as one group to the BOTTOM-RIGHT. The image stays on its labelled side of the text (Left/Top/Right/Bottom) with normal spacing. The image is never separated from the text and never left in the center." />
 
-                <Label Text="Image position relative to text" />
-                <Picker x:Name="ImagePositionPicker"
-                        AutomationId="ButtonAlignmentImagePosition"
-                        Title="Image position" />
-                <Label Text="Live preview line break mode" />
-                <Picker x:Name="LineBreakPicker"
-                        AutomationId="ButtonAlignmentLineBreakMode"
-                        Title="Line break mode" />
+            <!-- CASE 5 -->
+            <Label Style="{StaticResource CaseTitle}" Text="5. Right-to-left (FlowDirection = RightToLeft)" />
+            <Button AutomationId="Case5RtlStart" Style="{StaticResource CaseButton}" FlowDirection="RightToLeft"
+                    Text="H=Start (RTL)" HorizontalTextAlignment="Start" VerticalTextAlignment="Center" />
+            <Button AutomationId="Case5RtlEnd" Style="{StaticResource CaseButton}" FlowDirection="RightToLeft"
+                    Text="H=End (RTL)" HorizontalTextAlignment="End" VerticalTextAlignment="Center" />
+            <Label Style="{StaticResource Expected}"
+                   Text="EXPECTED: Start/End are MIRRORED. 'H=Start (RTL)' is on the RIGHT side and 'H=End (RTL)' is on the LEFT side, both vertically centered." />
 
-                <Grid ColumnDefinitions="*,Auto"
-                      RowDefinitions="Auto,Auto,Auto,Auto,Auto"
-                      RowSpacing="8"
-                      ColumnSpacing="12">
-                    <Label Text="Show image in text/image preview" VerticalOptions="Center" />
-                    <Switch x:Name="ShowImageSwitch"
-                            Grid.Column="1"
-                            AutomationId="ButtonAlignmentShowImage"
-                            SemanticProperties.Description="Show image in the text and image preview"
-                            IsToggled="True" />
-                    <Label Grid.Row="1" Text="Enable scenario Buttons" VerticalOptions="Center" />
-                    <Switch x:Name="EnabledSwitch"
-                            Grid.Row="1" Grid.Column="1"
-                            AutomationId="ButtonAlignmentEnabled"
-                            SemanticProperties.Description="Enable scenario Buttons"
-                            IsToggled="True" />
-                    <Label Grid.Row="2" Text="Right-to-left scenario layout" VerticalOptions="Center" />
-                    <Switch x:Name="RtlSwitch"
-                            Grid.Row="2" Grid.Column="1"
-                            AutomationId="ButtonAlignmentRtl"
-                            SemanticProperties.Description="Use right-to-left layout for scenarios" />
-                    <Label Grid.Row="3" Text="Asymmetric padding (32,8,8,24)" VerticalOptions="Center" />
-                    <Switch x:Name="PaddingSwitch"
-                            Grid.Row="3" Grid.Column="1"
-                            AutomationId="ButtonAlignmentAsymmetricPadding"
-                            SemanticProperties.Description="Use asymmetric Button padding" />
-                    <Label Grid.Row="4" Text="Larger text (26 instead of 18)" VerticalOptions="Center" />
-                    <Switch x:Name="LargeTextSwitch"
-                            Grid.Row="4" Grid.Column="1"
-                            AutomationId="ButtonAlignmentLargeText"
-                            SemanticProperties.Description="Use larger Button text" />
-                </Grid>
+            <!-- CASE 6 -->
+            <Label Style="{StaticResource CaseTitle}" Text="6. Asymmetric padding (L=48, T=8, R=8, B=32), H=Start, V=End" />
+            <Button AutomationId="Case6Padding" Style="{StaticResource CaseButton}" Padding="48,8,8,32"
+                    Text="Padded" HorizontalTextAlignment="Start" VerticalTextAlignment="End" />
+            <Label Style="{StaticResource Expected}"
+                   Text="EXPECTED: Text is near the bottom-left but clearly inset - about 48px from the LEFT edge and about 32px above the BOTTOM edge. Padding is respected, not ignored." />
 
-                <Label Text="Fixed comparison scenarios"
-                       FontAttributes="Bold"
-                       SemanticProperties.HeadingLevel="Level2" />
-                <Label Text="These keep their original text and wrapping. Enabled state, flow direction, padding, and font size still follow the switches." />
-                <VerticalStackLayout x:Name="ComparisonLayout" Spacing="12">
-                    <Label Text="Single line" FontAttributes="Bold" />
-                    <Button x:Name="SingleLineButton"
-                            AutomationId="ButtonAlignmentSingleLine"
-                            Style="{StaticResource ScenarioButton}"
-                            Text="Save"
-                            LineBreakMode="NoWrap"
-                            Clicked="OnScenarioClicked" />
+            <!-- CASE 7 -->
+            <Label Style="{StaticResource CaseTitle}" Text="7. Image-only Button (no Text), H=End, V=End set" />
+            <Button x:Name="ImageOnlyButton" AutomationId="Case7ImageOnly" Style="{StaticResource CaseButton}"
+                    HorizontalTextAlignment="End" VerticalTextAlignment="End"
+                    SemanticProperties.Description="Image-only Button" />
+            <Label Style="{StaticResource Expected}"
+                   Text="EXPECTED: The '+' image stays CENTERED, exactly like a normal image-only Button. Alignment is ignored when there is no text." />
 
-                    <Label Text="Explicit newline" FontAttributes="Bold" />
-                    <Button x:Name="MultilineButton"
-                            AutomationId="ButtonAlignmentMultiline"
-                            Style="{StaticResource ScenarioButton}"
-                            Text="Short line&#10;A longer second line"
-                            LineBreakMode="WordWrap"
-                            Clicked="OnScenarioClicked" />
+            <!-- CASE 8 -->
+            <Label Style="{StaticResource CaseTitle}" Text="8. Runtime changes (tap the buttons below)" />
+            <Button x:Name="RuntimeButton" Style="{StaticResource CaseButton}" Text="Runtime" AutomationId="RuntimeButton" />
+            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="6" RowDefinitions="Auto,Auto" RowSpacing="6">
+                <Button Text="Cycle H" Clicked="OnCycleHorizontal" AutomationId="CycleH" />
+                <Button Grid.Column="1" Text="Cycle V" Clicked="OnCycleVertical" AutomationId="CycleV" />
+                <Button Grid.Column="2" Text="Clear both" Clicked="OnClearAlignment" AutomationId="ClearBoth" />
+                <Button Grid.Row="1" Text="Toggle text" Clicked="OnToggleText" AutomationId="ToggleText" />
+                <Button Grid.Row="1" Grid.Column="1" Text="Toggle image" Clicked="OnToggleImage" AutomationId="ToggleImage" />
+                <Button Grid.Row="1" Grid.Column="2" Text="Toggle RTL" Clicked="OnToggleRtl" AutomationId="ToggleRtl" />
+            </Grid>
+            <Label x:Name="RuntimeState" AutomationId="RuntimeState" />
+            <Label x:Name="RuntimeExpected" Style="{StaticResource Expected}" AutomationId="RuntimeExpected" />
 
-                    <Label Text="Word-wrapped title" FontAttributes="Bold" />
-                    <Button x:Name="WrappedButton"
-                            AutomationId="ButtonAlignmentWrapped"
-                            Style="{StaticResource ScenarioButton}"
-                            Text="A longer button title that should wrap within the available content width"
-                            LineBreakMode="WordWrap"
-                            Clicked="OnScenarioClicked" />
+            <!-- CASE 9 -->
+            <Label Style="{StaticResource CaseTitle}" Text="9. Unsupported value (Justify)" />
+            <Button Text="Try setting HorizontalTextAlignment = Justify" Clicked="OnTryJustify" AutomationId="TryJustify" />
+            <Label x:Name="JustifyResult" AutomationId="JustifyResult" Text="(not run yet)" />
+            <Label Style="{StaticResource Expected}"
+                   Text="EXPECTED: After tapping, the result line says 'PASS: ArgumentException thrown' and the value stays Center. The app must not crash and the Button must not change." />
 
-                    <Label Text="Truncated title" FontAttributes="Bold" />
-                    <Button x:Name="TruncatedButton"
-                            AutomationId="ButtonAlignmentTruncated"
-                            Style="{StaticResource ScenarioButton}"
-                            Text="A longer button title that should be truncated instead of wrapping"
-                            LineBreakMode="TailTruncation"
-                            Clicked="OnScenarioClicked" />
-
-                    <Label Text="Image-only regular Button (not ImageButton)" FontAttributes="Bold" />
-                    <Button x:Name="ImageOnlyButton"
-                            AutomationId="ButtonAlignmentImageOnly"
-                            SemanticProperties.Description="Image-only regular Button"
-                            Style="{StaticResource ScenarioButton}"
-                            Clicked="OnScenarioClicked" />
-                </VerticalStackLayout>
-                <Label Text="Inspect native rendering before and after the alignment feature. Check all image positions and line break modes, change the text, and toggle RTL, padding, and font size. Current alignment may differ by platform; this page does not claim Start/Center/End support." />
-            </VerticalStackLayout>
-        </ScrollView>
-    </Grid>
+            <!-- CASE 10 -->
+            <Label Style="{StaticResource CaseTitle}" Text="10. Still a working Button" />
+            <Button x:Name="ClickableButton" Style="{StaticResource CaseButton}" Text="Tap me"
+                    HorizontalTextAlignment="Start" VerticalTextAlignment="Start"
+                    Clicked="OnClickableClicked" AutomationId="ClickableButton" />
+            <Label x:Name="ClickCount" Text="Taps: 0" AutomationId="ClickCount" />
+            <Label Style="{StaticResource Expected}"
+                   Text="EXPECTED: Tapping anywhere on the Button (not only on the text) increments 'Taps'. The pressed/hover visual state still works and the text stays at the top-left while pressed." />
+        </VerticalStackLayout>
+    </ScrollView>
 </ContentPage>
