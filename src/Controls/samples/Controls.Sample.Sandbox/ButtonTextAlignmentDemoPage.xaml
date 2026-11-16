@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage x:Class="Maui.Controls.Sample.ButtonTextAlignmentDemoPage"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             Title="Button alignment demo">
+    <ContentPage.Resources>
+        <Style x:Key="DemoButton" TargetType="Button">
+            <Setter Property="HeightRequest" Value="120" />
+            <Setter Property="Padding" Value="16" />
+            <Setter Property="FontSize" Value="20" />
+            <Setter Property="BackgroundColor" Value="#512BD4" />
+            <Setter Property="TextColor" Value="White" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="LineBreakMode" Value="WordWrap" />
+        </Style>
+        <Style x:Key="SectionTitle" TargetType="Label">
+            <Setter Property="FontSize" Value="20" />
+            <Setter Property="FontAttributes" Value="Bold" />
+        </Style>
+    </ContentPage.Resources>
+
+    <Grid Padding="16" RowDefinitions="Auto,*" RowSpacing="12">
+        <VerticalStackLayout Spacing="6">
+            <Label Text="HorizontalTextAlignment + VerticalTextAlignment"
+                   FontSize="20" FontAttributes="Bold" />
+            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="12">
+                <Label Text="Horizontal" />
+                <Label Grid.Column="1" Text="Vertical" />
+                <Picker x:Name="HorizontalPicker" Grid.Row="1"
+                        Title="Horizontal alignment" AutomationId="DemoHorizontal" />
+                <Picker x:Name="VerticalPicker" Grid.Row="1" Grid.Column="1"
+                        Title="Vertical alignment" AutomationId="DemoVertical" />
+            </Grid>
+            <Label x:Name="AlignmentSummary" AutomationId="DemoAlignmentSummary" />
+        </VerticalStackLayout>
+
+        <ScrollView Grid.Row="1" AutomationId="DemoScroll">
+            <VerticalStackLayout Spacing="12">
+                <Label Text="1. Text only" Style="{StaticResource SectionTitle}" />
+                <Button x:Name="TextOnlyButton" Text="Save changes"
+                        Style="{StaticResource DemoButton}" AutomationId="DemoTextOnly"
+                        Clicked="OnDemoClicked" />
+                <Label Text="The text moves inside the button; the button itself stays in place. Start/End follow the layout direction." />
+
+                <Label Text="2. Text + image" Style="{StaticResource SectionTitle}" />
+                <Button x:Name="TextImageButton" Text="Save changes"
+                        Style="{StaticResource DemoButton}" AutomationId="DemoTextImage"
+                        Clicked="OnDemoClicked" />
+                <Label Text="Image position relative to text" />
+                <Picker x:Name="ImagePositionPicker" Title="Image position"
+                        AutomationId="DemoImagePosition" />
+                <Label Text="CURRENT BEHAVIOR: Text and image move together as one group. Image position and spacing are preserved. Confirm whether to retain this behavior."
+                       TextColor="{AppThemeBinding Light=#8A4500, Dark=#FFCB80}" />
+
+                <Label Text="3. Image-only regular Button" Style="{StaticResource SectionTitle}" />
+                <Label Text="These are Button controls with ImageSource and no Text, not separate ImageButton controls." />
+                <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto"
+                      ColumnSpacing="12" RowSpacing="6">
+                    <Label Text="Reference: alignment unset" />
+                    <Label Grid.Column="1" Text="Alignment from selectors" />
+                    <Button x:Name="ImageOnlyReference" Grid.Row="1"
+                            Style="{StaticResource DemoButton}"
+                            AutomationId="DemoImageOnlyReference"
+                            SemanticProperties.Description="Reference image-only Button with alignment unset"
+                            Clicked="OnDemoClicked" />
+                    <Button x:Name="ImageOnlyButton" Grid.Row="1" Grid.Column="1"
+                            Style="{StaticResource DemoButton}"
+                            AutomationId="DemoImageOnly"
+                            SemanticProperties.Description="Image-only Button with selected alignment"
+                            Clicked="OnDemoClicked" />
+                </Grid>
+                <Label x:Name="ImageOnlySummary" AutomationId="DemoImageOnlySummary" />
+                <Label Text="DECISION NEEDED: Currently both images retain native placement (centered in our runs), even with Start/Start or End/End. Should these properties also move an image when there is no text?"
+                       TextColor="{AppThemeBinding Light=#8A4500, Dark=#FFCB80}" />
+
+                <Label Text="Additional demo controls" Style="{StaticResource SectionTitle}" />
+                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto"
+                      RowSpacing="8" ColumnSpacing="12">
+                    <Label Text="Right-to-left previews" VerticalOptions="Center" />
+                    <Switch x:Name="RtlSwitch" Grid.Column="1"
+                            AutomationId="DemoRtl"
+                            SemanticProperties.Description="Use right-to-left flow in the preview buttons" />
+                    <Label Grid.Row="1" Text="Multiline text" VerticalOptions="Center" />
+                    <Switch x:Name="MultilineSwitch" Grid.Row="1" Grid.Column="1"
+                            AutomationId="DemoMultiline"
+                            SemanticProperties.Description="Use two lines of text in the preview buttons" />
+                </Grid>
+                <Button Text="Restore native alignment"
+                        Clicked="OnRestoreNative" AutomationId="DemoRestoreNative" />
+                <Label x:Name="ClickStatus" Text="Tap any purple button to demonstrate clicks."
+                       AutomationId="DemoClickStatus" />
+                <Button Text="Open full verification scenarios"
+                        Clicked="OnOpenVerification" AutomationId="DemoOpenVerification" />
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage>
